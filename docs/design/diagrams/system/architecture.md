@@ -7,20 +7,18 @@ flowchart LR
 
     User[ユーザー]
 
-    Front[Next.js App\nReact + TypeScript]
-    Vercel[Vercel]
+    subgraph Vercel
+        Front[Next.js App\nReact + TypeScript]
+    end
 
     subgraph Supabase
         Auth[Authentication]
         DB[(PostgreSQL)]
-        Storage[File Storage]
     end
 
-    User -->|Browser| Front
+    User -->|Browser/HTTPS| Front
 
     Front -->|HTTPS| Auth
     Front -->|HTTPS| DB
-    Front -->|HTTPS| Storage
 
-    Vercel -. Hosting .-> Front
 ```
