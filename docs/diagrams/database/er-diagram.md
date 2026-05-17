@@ -21,11 +21,9 @@ erDiagram
     books {
         uuid id PK
         uuid user_id FK
-        varchar isbn
         varchar title
         varchar author
         varchar genre
-        text cover_image_url
         varchar status
         date completed_at
         timestamptz created_at
@@ -38,7 +36,7 @@ erDiagram
         uuid book_id FK
         integer page_number
         text content
-        boolean favorite
+        boolean is_favorite
         timestamptz created_at
         timestamptz updated_at
     }
@@ -47,6 +45,7 @@ erDiagram
         uuid id PK
         uuid user_id FK
         varchar name
+        varchar color
         timestamptz created_at
         timestamptz updated_at
     }
