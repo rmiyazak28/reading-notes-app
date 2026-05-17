@@ -64,7 +64,6 @@ SNS機能をあえて排除し、
 - Supabase
   - Authentication
   - PostgreSQL Database
-  - Storage
 
 ### インフラ
 - Vercel
