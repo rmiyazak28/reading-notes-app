@@ -10,8 +10,6 @@ flowchart LR
     Front[Next.js App\nReact + TypeScript]
     Vercel[Vercel]
 
-    OpenBD[OpenBD API]
-
     subgraph Supabase
         Auth[Authentication]
         DB[(PostgreSQL)]
@@ -23,8 +21,6 @@ flowchart LR
     Front -->|HTTPS| Auth
     Front -->|HTTPS| DB
     Front -->|HTTPS| Storage
-
-    Front -->|HTTPS / ISBN検索| OpenBD
 
     Vercel -. Hosting .-> Front
 ```

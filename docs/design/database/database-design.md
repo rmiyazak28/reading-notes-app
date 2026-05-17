@@ -27,11 +27,9 @@
 |---|---|---|---|---|---|
 | id | uuid | ○ | - | ○ | 書籍ID |
 | user_id | uuid | - | auth.users.id | ○ | 所有ユーザー |
-| isbn | varchar(20) | - | - | ○ | ISBN |
 | title | varchar(255) | - | - | ○ | 書籍タイトル |
-| author | varchar(255) | - | - | ○ | 著者名 |
+| author | varchar(255) | - | - | - | 著者名 |
 | genre | varchar(100) | - | - | - | ジャンル |
-| cover_image_url | text | - | - | - | 表紙画像URL |
 | status | varchar(20) | - | - | ○ | DEFAULT 'unread' |
 | completed_at | date | - | - | - | 読了日 |
 | created_at | timestamptz | - | - | ○ | DEFAULT now() |
@@ -52,12 +50,6 @@ CHECK (
 ```
 
 ### UNIQUE制約
-
-ISBN重複防止：
-
-```sql
-UNIQUE (user_id, isbn)
-```
 
 同一タイトル・著者重複防止：
 
@@ -230,13 +222,6 @@ ON books(user_id);
 ```sql
 CREATE INDEX idx_books_user_status
 ON books(user_id, status);
-```
-
-### ISBN検索
-
-```sql
-CREATE INDEX idx_books_isbn
-ON books(isbn);
 ```
 
 ### 書籍タイトル部分一致検索（pg_trgm + GIN）
