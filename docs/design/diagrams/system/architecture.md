@@ -1,6 +1,10 @@
 # システム構成図（Mermaid）
 
-設計書: [§1 システム構成設計](../../design/architecture/overview.md)
+## 参照元
+
+設計書: [§1 システム構成設計](../../design/architecture/system-architecture.md)
+
+## 遷移図
 
 ```mermaid
 flowchart LR

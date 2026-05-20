@@ -1,6 +1,10 @@
 # DB ER図（Mermaid）
 
-設計書: [§4 DB設計](../../design/database/overview.md)
+## 参照元
+
+設計書: [§4 DB設計](../../design/database/database-design.md)
+
+## 遷移図
 
 ```mermaid
 erDiagram
