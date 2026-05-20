@@ -2,7 +2,7 @@
 
 ## 1.1 システム構成図
 
-図のみのファイルは [diagrams/system/architecture](../../diagrams/system/architecture.md) を参照してください。
+→ [diagrams/system/architecture.md](../../diagrams/system/architecture.md) を参照
 
 ---
 

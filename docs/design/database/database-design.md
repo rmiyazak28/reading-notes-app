@@ -2,7 +2,7 @@
 
 ## 4.1 ER図
 
-図のみのファイルは [diagrams/database/er-diagram](../../diagrams/database/er-diagram.md) を参照してください。
+→ [diagrams/database/er-diagram.md](../../diagrams/database/er-diagram.md) を参照
 
 ---
 
