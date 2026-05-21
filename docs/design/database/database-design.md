@@ -51,10 +51,10 @@ CHECK (
 
 ### UNIQUE制約
 
-同一タイトル・著者重複防止：
+同一タイトル重複防止：
 
 ```sql
-UNIQUE (user_id, title, author)
+UNIQUE (user_id, title)
 ```
 
 ### 外部キー
@@ -110,7 +110,6 @@ ON DELETE CASCADE
 | user_id | uuid | - | auth.users.id | ○ | 所有ユーザー |
 | name | varchar(50) | - | - | ○ | タグ名 |
 | created_at | timestamptz | - | - | ○ | DEFAULT now() |
-| updated_at | timestamptz | - | - | ○ | DEFAULT now() |
 
 ### UNIQUE制約
 
@@ -187,17 +186,6 @@ EXECUTE FUNCTION set_updated_at();
 ```sql
 CREATE TRIGGER trg_reading_memos_updated_at
 BEFORE UPDATE ON reading_memos
-FOR EACH ROW
-EXECUTE FUNCTION set_updated_at();
-```
-
----
-
-## tags
-
-```sql
-CREATE TRIGGER trg_tags_updated_at
-BEFORE UPDATE ON tags
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 ```

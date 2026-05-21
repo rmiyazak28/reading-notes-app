@@ -40,7 +40,7 @@ erDiagram
         uuid book_id FK
         integer page_number
         text content
-        boolean is_favorite
+        boolean favorite
         timestamptz created_at
         timestamptz updated_at
     }
@@ -49,9 +49,7 @@ erDiagram
         uuid id PK
         uuid user_id FK
         varchar name
-        varchar color
         timestamptz created_at
-        timestamptz updated_at
     }
 
     memo_tags {
