@@ -15,13 +15,15 @@ src/
 │   │   ├── books/
 │   │   │   ├── page.tsx            # SCR-04 書籍一覧
 │   │   │   └── [id]/
-│   │   │       ├── page.tsx        # SCR-05 書籍詳細
-│   │   │       └── edit/page.tsx   # SCR-06 書籍編集
+│   │   │       ├── page.tsx        # SCR-05 書籍詳細 ※[id]はbook_id
+│   │   │       └── memo/
+│   │   │           └── new/page.tsx  # SCR-07 読書メモ登録（スマホのみ）
 │   │   ├── memos/
-│   │   │   ├── page.tsx            # SCR-08 全読書メモ検索
-│   │   │   └── [id]/edit/page.tsx  # SCR-07 読書メモ編集
-│   │   ├── favorites/page.tsx      # SCR-10 お気に入りメモ一覧
-│   │   └── settings/page.tsx       # SCR-09 設定
+│   │   │   ├── page.tsx            # SCR-06 全読書メモ検索
+│   │   │   └── [id]/
+│   │   │       └── edit/page.tsx   # SCR-08 読書メモ編集（スマホのみ）※[id]はmemo_id
+│   │   ├── favorites/page.tsx      # SCR-09 お気に入りメモ一覧
+│   │   └── settings/page.tsx       # SCR-10 設定
 │   │   
 │   ├── api/
 │   │   └── auth/

@@ -40,6 +40,23 @@ type ActionError = {
 
 ---
 
+## 5.0.1 画面別Action利用方針
+
+### SCR-03 ホーム画面
+
+専用Actionは設けず、既存Actionを組み合わせて取得する。
+
+| セクション | 使用Action | パラメータ |
+|---|---|---|
+| 最近読んだ本 | `getBooks` | `limit: 5`（目安） |
+| 読書中書籍 | `getBooks` | `status: "reading"`, `limit: 5` |
+| 最近のメモ | `getMemos` | `limit: 5` |
+| お気に入りメモ | `getMemos` | `favoriteOnly: true`, `limit: 5` |
+
+> limitの具体的な件数はUI実装時に決定する。
+
+---
+
 ## 5.1 書籍Actions
 
 ### getBooks
@@ -50,8 +67,9 @@ type ActionError = {
 getBooks(params: GetBooksParams): Promise<ActionResult<Book[]>>
 
 type GetBooksParams = {
-  query?: string;   // タイトル・著者の部分一致検索
+  query?: string;
   status?: "unread" | "reading" | "completed";
+  limit?: number;
 };
 ```
 
@@ -159,6 +177,7 @@ type GetMemosParams = {
   query?: string;       // メモ内容・タグ・書籍名・著者名の部分一致
   favoriteOnly?: boolean;
   tagIds?: string[];
+  limit?: number;
 };
 ```
 
