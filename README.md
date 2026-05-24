@@ -124,7 +124,7 @@ Supabase ダッシュボード > Authentication > URL Configuration に以下を
 src/
 ├── app/
 │   ├── (auth)/          # ログイン・新規登録画面
-├── (protected)/     # 認証済みユーザー向け画面
+│   └── (protected)/     # 認証済みユーザー向け画面
 │       ├── home/             # ホーム画面
 │       ├── books/            # 書籍一覧・詳細・編集
 │       ├── memos/            # 全読書メモ検索（SCR-06）・メモ編集（SCR-08、スマホのみ）
@@ -171,3 +171,22 @@ src/
 
 - **PC / スマホのUI分岐**  
   メモの登録・編集はデバイスで実装が異なる。PCはモーダル（MOD-03・MOD-04）、スマホは専用画面（SCR-07・SCR-08）への画面遷移。
+
+## ロードマップ
+
+### Phase 1（MVP）
+- 認証（Email / Google OAuth）
+- 書籍CRUD・メモCRUD
+- タグ・お気に入り・メモ検索
+
+### Phase 2
+- Google Books API連携（書籍名・著者・表紙画像の自動取得）
+- 表紙画像グリッド表示
+- 全メモ検索の複数単語対応（スペース区切りAND検索）
+- タブレットUI対応
+
+### Phase 3
+- Docker開発環境整備
+- モバイルアプリ化（React Native / Capacitorなど、方針未定）
+- AI読書メモ要約
+- バーコード読み取りISBN検索
