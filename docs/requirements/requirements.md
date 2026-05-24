@@ -69,7 +69,7 @@ SNS機能をあえて排除し、
 ## 4. システム構成
 
 ### 開発環境
-- Cursor
+- VS Code + Claude Code
 
 ### フロントエンド
 - Next.js (App Router)

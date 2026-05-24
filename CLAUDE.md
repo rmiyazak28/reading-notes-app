@@ -105,7 +105,7 @@ Several screens have **different implementations by device**:
 - Memo create/edit: modal (MOD-03/04) on PC, dedicated page (SCR-07/08) on mobile
 - Book/memo lists: table on PC, card on mobile
 
-## Absolute Rules (from `.cursor/rules/project.mdc`)
+## Absolute Rules
 
 - Do not add libraries without explaining why; always justify `package.json` changes
 - Never edit `.env` files
@@ -115,6 +115,24 @@ Several screens have **different implementations by device**:
 - Keep changes to ≤ 3 files per task; never do large refactors in one shot
 - Only implement features that exist in the requirements doc
 - Confirm the target screen ID before implementing UI
+
+## Language
+Always respond in Japanese.
+
+## Pre-task Confirmation
+- Before any implementation, modification, or deletion, present the target files and planned changes, and get user approval before proceeding.
+- For changes spanning multiple files, confirm one file at a time.
+- If anything is unclear, always ask rather than proceeding with assumptions.
+
+## Additional Prohibitions
+- Never delete files or directories (no `rm`, `unlink`, or any equivalent).
+- Never do large-scale rewrites of existing files; always propose changes in small, reviewable diffs.
+- Explain the reason before modifying `package.json` and get approval.
+- Explain the reason before modifying any config file (`next.config.*`, `tailwind.config.*`, `tsconfig.json`, etc.) and get approval.
+
+## On Errors
+- Do not attempt to fix errors autonomously; present the error details and confirm the approach with the user first.
+- For build errors or type errors, explain the root cause and proposed fix before making any changes.
 
 ## Environment Variables
 
