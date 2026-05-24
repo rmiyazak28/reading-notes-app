@@ -5,13 +5,14 @@ src/
 ├── app/
 │   ├── (auth)/
 │   │   ├── login/page.tsx          # SCR-01
-│   │   └── register/page.tsx       # SCR-02
+│   │   └── signup/page.tsx       # SCR-02
 │   │
 │   ├── (protected)/
-│   │   ├── layout.tsx              # 認証チェック共通レイアウト
-│   │   ├── page.tsx                # SCR-03 ホーム
-│   │   ├── loading.tsx
-│   │   ├── error.tsx
+│   │   ├── layout.tsx              # 認証済みユーザー共通レイアウト
+│   │   ├── home/
+│   │   │   ├── page.tsx            # SCR-03 ホーム
+│   │   │   ├── loading.tsx
+│   │   │   └── error.tsx
 │   │   ├── books/
 │   │   │   ├── page.tsx            # SCR-04 書籍一覧
 │   │   │   └── [id]/

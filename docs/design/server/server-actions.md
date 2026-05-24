@@ -48,7 +48,7 @@ type ActionError = {
 
 | セクション | 使用Action | パラメータ |
 |---|---|---|
-| 最近読んだ本 | `getBooks` | `limit: 5`（目安） |
+| 最近読んだ本 | `getBooks` | `limit: 5`（目安）, `status`未指定 |
 | 読書中書籍 | `getBooks` | `status: "reading"`, `limit: 5` |
 | 最近のメモ | `getMemos` | `limit: 5` |
 | お気に入りメモ | `getMemos` | `favoriteOnly: true`, `limit: 5` |
@@ -173,7 +173,7 @@ getMemos(params: GetMemosParams): Promise<ActionResult<MemoWithBook[]>>
 
 type GetMemosParams = {
   bookId?: string;      // 指定時: 書籍詳細画面用（F-11, F-13）
-                        // 未指定: 全メモ検索用（F-14）
+                        // 未指定: 全メモ検索・お気に入り一覧用（F-14, F-16）
   query?: string;       // メモ内容・タグ・書籍名・著者名の部分一致
   favoriteOnly?: boolean;
   tagIds?: string[];
@@ -202,7 +202,7 @@ type CreateMemoInput = {
   page_number?: number;  // 1以上
   content: string;       // 必須
   favorite?: boolean;    // デフォルト: false
-  tagIds?: string[];
+  tags?: { id?: string; name: string }[];  // idなしは新規作成
 };
 ```
 
@@ -210,8 +210,9 @@ type CreateMemoInput = {
 |---|---|
 | 認証 | 必須 |
 | バリデーション | §7.2参照 |
-| タグ紐付け | tagIdsを受け取り、memo_tagsに一括INSERT |
+| タグ紐付け | tagsを受け取り、idなしのタグは先にtagsテーブルにINSERT後（重複時は既存IDを使用）、memo_tagsに一括INSERT |
 | user_id | セッションから自動付与 |
+| タグ名バリデーション | idなしタグのnameは必須・50文字以内（§7.3参照） |
 
 ---
 
@@ -226,7 +227,7 @@ type UpdateMemoInput = {
   page_number?: number | null;
   content?: string;
   favorite?: boolean;
-  tagIds?: string[];
+  tags?: { id?: string; name: string }[];  // idなしは新規作成
 };
 ```
 
@@ -235,7 +236,8 @@ type UpdateMemoInput = {
 | 認証 | 必須 |
 | バリデーション | §7.2参照 |
 | 所有権 | RLSで担保 |
-| タグ更新 | memo_tagsを一旦DELETE後、再INSERT（洗い替え方式） |
+| タグ更新 | tagsを受け取り、idなしのタグは先にtagsテーブルにINSERT後、memo_tagsを一旦DELETE→再INSERT（洗い替え方式） |
+| タグ名バリデーション | idなしタグのnameは必須・50文字以内（§7.3参照） |
 
 ---
 
@@ -285,42 +287,6 @@ getTags(): Promise<ActionResult<Tag[]>>
 |---|---|
 | 認証 | 必須 |
 | ソート | name ASC |
-
----
-
-### createTag
-
-タグを新規作成する（MOD-05から呼び出し）。
-
-```ts
-createTag(input: CreateTagInput): Promise<ActionResult<Tag>>
-
-type CreateTagInput = {
-  name: string; // 必須 / 50文字以内
-};
-```
-
-| 項目 | 内容 |
-|---|---|
-| 認証 | 必須 |
-| 重複チェック | 同一user_id + nameは不可（DB UNIQUE制約） |
-| user_id | セッションから自動付与 |
-
----
-
-### deleteTag
-
-タグを削除する（MOD-05から呼び出し）。
-
-```ts
-deleteTag(id: string): Promise<ActionResult<void>>
-```
-
-| 項目 | 内容 |
-|---|---|
-| 認証 | 必須 |
-| 所有権 | RLSで担保 |
-| 連鎖削除 | memo_tags はDB CASCADE DELETEで対応 |
 
 ---
 
