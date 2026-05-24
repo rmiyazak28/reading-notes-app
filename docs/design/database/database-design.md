@@ -295,6 +295,14 @@ CREATE INDEX idx_tags_name
 ON tags(name);
 ```
 
+### タグ名部分一致検索（pg_trgm + GIN）
+
+```sql
+CREATE INDEX idx_tags_name_trgm
+ON tags
+USING gin (name gin_trgm_ops);
+```
+
 ---
 
 ## memo_tags

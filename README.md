@@ -51,7 +51,31 @@ npm install
 
 # 環境変数を設定（後述）
 cp .env.local.example .env.local
+```
 
+### Supabase セットアップ
+1. [Supabase](https://supabase.com) でプロジェクトを作成する
+2. 「Project Settings > API」から URL と anon key を取得し `.env.local` に設定する
+3. 「Project Settings > API」から service_role key を取得し `.env.local` に設定する（外部に漏らさないこと）
+4. SQL Editor で `supabase/migrations/` 内のSQLファイルを順番に実行する
+5. Authentication > Providers で Google OAuth を有効化し、クライアントIDとシークレットを設定する
+6. Authentication > URL Configuration で Site URL と Redirect URL（`http://localhost:3000/api/auth/callback`）を設定する
+
+#### SQL実行順序
+
+SQL Editor で以下の順番にファイルを実行してください。
+
+| 順序 | ファイル名 | 内容 |
+|---|---|---|
+| 1 | `001_extensions.sql` | pg_trgm 拡張の有効化 |
+| 2 | `002_tables.sql` | テーブル作成（books / reading_memos / tags / memo_tags） |
+| 3 | `003_indexes.sql` | インデックス作成 |
+| 4 | `004_rls.sql` | RLSポリシー設定 |
+| 5 | `005_triggers.sql` | updated_at 自動更新トリガー |
+
+> 順番を誤ると外部キー制約・RLSの依存関係でエラーになります。
+
+```bash
 # 開発サーバーを起動
 npm run dev
 ```
@@ -67,9 +91,30 @@ npm run dev
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# SUPABASE_SERVICE_ROLE_KEY はサーバーサイド専用。NEXT_PUBLIC_ プレフィックス禁止。
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# NEXT_PUBLIC_APP_URL は本番環境では Vercel のデプロイ URL に変更する。
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 各値は Supabase ダッシュボードの「Project Settings > API」から取得できます。
+
+### Vercel デプロイ時の追加設定
+
+Vercel の「Environment Variables」に上記4つを登録してください。
+`NEXT_PUBLIC_APP_URL` は本番URLに変更します（例：`https://your-app.vercel.app`）。
+
+### Google OAuth に必要な Supabase 側設定
+
+Supabase ダッシュボード > Authentication > URL Configuration に以下を設定します。
+
+| 項目 | 値 |
+|---|---|
+| Site URL | `http://localhost:3000`（本番では本番URL） |
+| Redirect URL | `http://localhost:3000/api/auth/callback` |
+
+追加の環境変数は不要です（Google OAuthのクライアントIDはSupabaseダッシュボード側に入力するため、`.env.local` には登場しません）。
 
 ---
 
@@ -100,11 +145,10 @@ src/
 | 画面 | パス | 概要 |
 |---|---|---|
 | ログイン | `/login` | メール・Google 認証 |
-| 新規登録 | `/register` | アカウント作成 |
-| ホーム | `/` | 最近の書籍・メモ・お気に入りを表示 |
+| 新規登録 | `/signup` | アカウント作成 |
+| ホーム | `/home` | 最近の書籍・メモ・お気に入りメモ・読書中書籍を表示 |
 | 書籍一覧 | `/books` | 書籍の検索・登録 |
 | 書籍詳細 | `/books/[id]` | 書籍情報・メモ一覧 |
-| 書籍編集 | `/books/[id]/edit` | 書籍情報の編集・削除 |
 | 読書メモ編集 | `/memos/[id]/edit` | メモの編集・削除 |
 | 全メモ検索 | `/memos` | 横断検索・フィルタ |
 | お気に入り | `/favorites` | お気に入りメモ一覧 |

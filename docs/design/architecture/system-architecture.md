@@ -17,7 +17,7 @@
 | DB / BaaS | Supabase(PostgreSQL) |
 | ORM / BaaS | Supabase |
 | ホスティング | Vercel |
-| 状態管理 | React Context |
+| 状態管理 | React Context / URL Query Parameter / useState / React Hook Form |
 | サーバ処理 | Server Actions |
 | PWA | next-pwa |
 | バージョン管理 | GitHub |
