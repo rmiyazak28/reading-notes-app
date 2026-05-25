@@ -1,3 +1,5 @@
-export default function BooksPage() {
-  return <div />;
+import { BooksPage } from "@/components/books-page"
+
+export default function Page() {
+  return <BooksPage />
 }
