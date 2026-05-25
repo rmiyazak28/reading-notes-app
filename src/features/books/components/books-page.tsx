@@ -3,26 +3,28 @@
 import { useState, useMemo } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Header } from "@/components/header"
-import { SearchBar } from "@/components/search-bar"
-import { BookTable } from "@/components/book-table"
-import { BookCardList } from "@/components/book-card"
-import { EmptyState } from "@/components/empty-state"
+import { SearchBar } from "@/components/common/search-bar"
+import { BookTable } from "@/features/books/components/book-table"
+import { BookCardList } from "@/features/books/components/book-card"
+import { EmptyState } from "@/components/common/empty-state"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { dummyBooks, type Book } from "@/lib/books"
+import type { Book } from "@/features/books/types"
 
-export function BooksPage() {
+type Props = {
+  initialBooks: Book[]
+}
+
+export function BooksPage({ initialBooks }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [books] = useState<Book[]>(dummyBooks)
+  const [books] = useState<Book[]>(initialBooks)  
   const isMobile = useIsMobile()
-
   const filteredBooks = useMemo(() => {
     if (!searchQuery.trim()) return books
     const query = searchQuery.toLowerCase()
     return books.filter(
       (book) =>
         book.title.toLowerCase().includes(query) ||
-        book.author.toLowerCase().includes(query)
+        book.author?.toLowerCase().includes(query)
     )
   }, [books, searchQuery])
 
@@ -31,12 +33,9 @@ export function BooksPage() {
     console.log("Add book clicked")
   }
 
-  return (
+return (
     <div className="min-h-screen">
-      <Header />
-
-      <main className="container mx-auto px-4 py-6">
-        {/* Search bar - sticky on scroll */}
+      <main className="container mx-auto px-4 py-6">        {/* Search bar - sticky on scroll */}
         <div className="sticky top-16 z-40 pb-4 -mx-4 px-4 bg-gradient-to-b from-slate-900 via-slate-900/95 to-transparent">
           <div className="flex items-center justify-between gap-4">
             <div className="w-full max-w-xs">
