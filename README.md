@@ -89,16 +89,18 @@ npm run dev
 `.env.local` に以下を設定してください。
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-# SUPABASE_SERVICE_ROLE_KEY はサーバーサイド専用。NEXT_PUBLIC_ プレフィックス禁止。
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NNEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+# SUPABASE_SECRET_KEY はサーバーサイド専用。NEXT_PUBLIC_ プレフィックス禁止。
+SUPABASE_SECRET_KEY=your_supabase_secret_key
 
 # NEXT_PUBLIC_APP_URL は本番環境では Vercel のデプロイ URL に変更する。
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-各値は Supabase ダッシュボードの「Project Settings > API」から取得できます。
+各値は Supabase ダッシュボードの「Settings > API Keys」から取得できます。
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` は「API Keys」タブの Publishable key の値を使用します。
+`SUPABASE_SECRET_KEY` は「API Keys」タブの Secret key の値を使用します（デフォルトでは非表示のため「Reveal」が必要）。
 
 ### Vercel デプロイ時の追加設定
 
@@ -160,11 +162,12 @@ src/
 
 実装時に迷いやすい設計判断を記録しておきます。
 
-- **`getUser()` / `getSession()` の使い分け**  
-  サーバーサイド（Server Actions・Middleware）では必ず `getUser()` を使用する。`getSession()` はCookieの値をそのまま返すため改ざんリスクがある。
+- **`getUser()` / `getClaims()` / `getSession()` の使い分け**  
+  サーバーサイドでは `getSession()` を使用しない（Cookie の値をそのまま返すため改ざんリスクがある）。Server Actions では `getUser()` を使用する。ページ・レイアウト保護では `getClaims()` を使用する（ネットワーク呼び出し不要でJWT検証が可能）。Proxy 内では `getUser()` を使用する。
 
-- **`SUPABASE_SERVICE_ROLE_KEY` の取り扱い**  
+- **`SUPABASE_SECRET_KEY` の取り扱い**  
   アカウント削除（`deleteAccount` Action）のみで使用。`NEXT_PUBLIC_` プレフィックスを付与してはならない。
+  なお、新しい `sb_secret_...` キーと `supabase-js` の Admin API（`auth.admin.*`）の互換性に問題が報告されている（[Issue #1568](https://github.com/supabase/supabase-js/issues/1568)）。実装時に動作確認が必要。問題が解消されない場合は Legacy の `service_role` キーを使用すること。
 
 - **メモ追加の導線**  
   メモの追加は書籍詳細画面（SCR-05）からのみ行う。ホーム・全メモ検索・お気に入り画面にはメモ追加ボタンを置かない。

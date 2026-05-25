@@ -383,6 +383,7 @@ deleteAccount(): Promise<ActionResult<void>>
 
 | 項目 | 内容 |
 |---|---|
-| 実装 | Supabase Admin APIを使用（Service Role Key必須） |
+| 実装 | Supabase Admin APIを使用（Secret Key必須） |
 | 連鎖削除 | books, reading_memos, tags はDB CASCADE DELETEで対応 |
-| 注意 | Service Role KeyはServer側のみで使用し、クライアントに露出しない |
+| 注意 | Secret KeyはServer側のみで使用し、クライアントに露出しない |
+| 互換性注意 | 新しい `sb_secret_...` キーと `auth.admin.deleteUser()` の互換性問題が報告されている。実装時に動作確認し、問題があれば Legacy の `service_role` キーを使用すること |

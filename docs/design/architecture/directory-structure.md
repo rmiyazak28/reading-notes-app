@@ -62,12 +62,12 @@ src/
 │   ├── supabase/
 │   │   ├── client.ts           # ブラウザ（Client Component）用Supabaseクライアント
 │   │   ├── server.ts           # Server Component / Server Actions用クライアント
-│   │   └── middleware.ts       # Next.js Middlewareでのセッション更新用
+│   │   └── proxy.ts            # Proxyでのセッション更新用（proxy関数を定義）
 │   ├── validations/
 │   └── utils/
 │
 ├── hooks/
 ├── constants/
 ├── types/
-└── middleware.ts
+└── proxy.ts                    # Next.js Proxyエントリポイント（lib/supabase/proxy.tsを呼び出す）
 ```
