@@ -307,16 +307,10 @@ USING gin (name gin_trgm_ops);
 
 ## memo_tags
 
-### メモ → タグ取得
-
-```sql
-CREATE INDEX idx_memo_tags_memo_id
-ON memo_tags(memo_id);
-```
-
 ### タグ → メモ取得
-
 ```sql
+-- memo_id 単独インデックスは PRIMARY KEY (memo_id, tag_id) でカバーされるため不要。
+-- tag_id は PK の 2 列目のため、単独検索用に別途定義する。
 CREATE INDEX idx_memo_tags_tag_id
 ON memo_tags(tag_id);
 ```
