@@ -94,7 +94,7 @@ npm run dev
 `.env.local` に以下を設定してください。
 
 ```env
-NNEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 # SUPABASE_SECRET_KEY はサーバーサイド専用。NEXT_PUBLIC_ プレフィックス禁止。
 SUPABASE_SECRET_KEY=your_supabase_secret_key
