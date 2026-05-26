@@ -53,27 +53,32 @@ npm install
 cp .env.local.example .env.local
 ```
 
+> **補足：** Supabase CLI は devDependency として含まれています（`npm install` で自動的にインストールされます）。
+
 ### Supabase セットアップ
 1. [Supabase](https://supabase.com) でプロジェクトを作成する
 2. 「Project Settings > API」から URL と anon key を取得し `.env.local` に設定する
 3. 「Project Settings > API」から service_role key を取得し `.env.local` に設定する（外部に漏らさないこと）
-4. SQL Editor で `supabase/migrations/` 内のSQLファイルを順番に実行する
+4. Supabase CLI でマイグレーションを実行する（後述）
 5. Authentication > Providers で Google OAuth を有効化し、クライアントIDとシークレットを設定する
 6. Authentication > URL Configuration で Site URL と Redirect URL（`http://localhost:3000/api/auth/callback`）を設定する
 
-#### SQL実行順序
+#### マイグレーション手順（Supabase CLI）
 
-SQL Editor で以下の順番にファイルを実行してください。
+```bash
+# CLIにログイン（ブラウザでPersonal Access Tokenを発行する）
+npx supabase login
 
-| 順序 | ファイル名 | 内容 |
-|---|---|---|
-| 1 | `001_extensions.sql` | pg_trgm 拡張の有効化 |
-| 2 | `002_tables.sql` | テーブル作成（books / reading_memos / tags / memo_tags） |
-| 3 | `003_indexes.sql` | インデックス作成 |
-| 4 | `004_rls.sql` | RLSポリシー設定 |
-| 5 | `005_triggers.sql` | updated_at 自動更新トリガー |
+# リモートプロジェクトにリンク（DBパスワードを求められる）
+npx supabase link
 
-> 順番を誤ると外部キー制約・RLSの依存関係でエラーになります。
+# マイグレーションをリモートDBに反映
+npx supabase db push
+```
+
+`supabase/migrations/` 内のファイルがタイムスタンプ順に自動適用されます。
+
+> **注意：** 初期構築後のスキーマ変更は、ダッシュボードのSQL EditorやTable Editorで直接変更しないこと。必ず `npx supabase migration new <name>` でマイグレーションファイルを作成し、`npx supabase db push` で反映してください。
 
 ```bash
 # 開発サーバーを起動
@@ -89,7 +94,7 @@ npm run dev
 `.env.local` に以下を設定してください。
 
 ```env
-NNEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 # SUPABASE_SECRET_KEY はサーバーサイド専用。NEXT_PUBLIC_ プレフィックス禁止。
 SUPABASE_SECRET_KEY=your_supabase_secret_key
