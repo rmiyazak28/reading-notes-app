@@ -1,7 +1,8 @@
 "use client"
 
-import type { Book } from "@/lib/books"
-import { StatusBadge } from "@/components/status-badge"
+import { useRouter } from "next/navigation"
+import type { Book } from "@/features/books/types"
+import { StatusBadge } from "@/components/common/status-badge"
 import { FileText, Star } from "lucide-react"
 import {
   Table,
@@ -16,8 +17,8 @@ interface BookTableProps {
   books: Book[]
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("ja-JP", {
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("ja-JP", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -25,6 +26,8 @@ function formatDate(date: Date): string {
 }
 
 export function BookTable({ books }: BookTableProps) {
+  const router = useRouter()
+
   return (
     <div className="glass rounded-lg overflow-hidden">
       <Table>
@@ -44,6 +47,7 @@ export function BookTable({ books }: BookTableProps) {
             <TableRow
               key={book.id}
               className="border-white/15 hover:bg-white/5 transition-colors cursor-pointer"
+              onClick={() => router.push(`/books/${book.id}`)}
             >
               <TableCell className="font-medium text-[#f1f5f9]">
                 {book.title}
@@ -70,7 +74,7 @@ export function BookTable({ books }: BookTableProps) {
                 </div>
               </TableCell>
               <TableCell className="text-[#cbd5e1]">
-                {formatDate(book.updatedAt)}
+                {formatDate(book.updated_at)}
               </TableCell>
             </TableRow>
           ))}

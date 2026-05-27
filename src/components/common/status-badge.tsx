@@ -1,4 +1,4 @@
-import type { ReadingStatus } from "@/lib/books"
+import type { ReadingStatus } from "@/features/books/types"
 import { cn } from "@/lib/utils"
 
 interface StatusBadgeProps {
