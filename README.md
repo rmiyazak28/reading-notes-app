@@ -57,8 +57,8 @@ cp .env.local.example .env.local
 
 ### Supabase セットアップ
 1. [Supabase](https://supabase.com) でプロジェクトを作成する
-2. 「Project Settings > API」から URL と anon key を取得し `.env.local` に設定する
-3. 「Project Settings > API」から service_role key を取得し `.env.local` に設定する（外部に漏らさないこと）
+2. 「Project Settings > API」から URL と PUBLISHABLE_KEY を取得し `.env.local` に設定する
+3. 「Project Settings > API」から SECRET_KEY を取得し `.env.local` に設定する（外部に漏らさないこと）
 4. Supabase CLI でマイグレーションを実行する（後述）
 5. Authentication > Providers で Google OAuth を有効化し、クライアントIDとシークレットを設定する
 6. Authentication > URL Configuration で Site URL と Redirect URL（`http://localhost:3000/api/auth/callback`）を設定する
@@ -186,6 +186,7 @@ src/
 - 認証（Email / Google OAuth）
 - 書籍CRUD・メモCRUD
 - タグ・お気に入り・メモ検索
+- PWA対応
 
 ### Phase 2
 - Google Books API連携（書籍名・著者・表紙画像の自動取得）
