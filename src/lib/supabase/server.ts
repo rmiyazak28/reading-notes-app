@@ -1,3 +1,5 @@
+// Server Component / Server Actions / Route Handler 専用。
+// ブラウザ環境では client.ts の createClient() を使うこと。
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -18,8 +20,8 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Server Componentから呼ばれた場合は無視
-            // Proxyがトークンリフレッシュを担うため問題なし
+            // Server Component から呼ばれた場合、レスポンス送信後のため Cookie を書き込めない。
+            // セッションリフレッシュは Middleware（proxy.ts）が担うため、ここで握り潰して問題ない。
           }
         },
       },

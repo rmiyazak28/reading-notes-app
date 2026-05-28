@@ -59,6 +59,8 @@ export function SignupForm() {
         title: "登録完了",
         description: "アカウントを作成しました。ログインしてください。",
       })
+      // Supabase のメール確認フローが有効な場合、確認メール送信前に自動ログインさせないため
+      // 登録直後は /login へ誘導する。
       router.push("/login")
     })
   }

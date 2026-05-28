@@ -60,6 +60,8 @@ export function LoginForm() {
         })
         return
       }
+      // Server Action はブラウザリダイレクト不可のため URL を受け取ってここで遷移する。
+      // router.push() では OAuth フロー中の Cookie セットが正常に完了しない。
       window.location.href = result.data.url
     })
   }
