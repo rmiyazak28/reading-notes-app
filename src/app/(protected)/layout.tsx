@@ -1,9 +1,20 @@
-import { Header } from "@/components/layout/header"  // v0のheader.tsxを移動済みの想定
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { Header } from "@/components/layout/header"
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/login")
+  }
+
+  const userName = (user.user_metadata?.name as string | undefined) ?? user.email ?? ""
+
   return (
     <>
-      <Header />
+      <Header userName={userName} />
       <main>{children}</main>
     </>
   )

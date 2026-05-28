@@ -104,3 +104,19 @@ export async function signInWithGoogle(): Promise<ActionResult<{ url: string }>>
 
   return { data: { url: data.url }, error: null }
 }
+
+/**
+ * ログアウトする。
+ * @returns 成功時は `data: undefined`、失敗時は `error` オブジェクト
+ */
+export async function signOut(): Promise<ActionResult<void>> {
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    return { data: null, error: { code: "UNKNOWN", message: error.message } }
+  }
+
+  return { data: undefined, error: null }
+}
