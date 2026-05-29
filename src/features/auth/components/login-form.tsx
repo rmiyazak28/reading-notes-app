@@ -72,7 +72,7 @@ export function LoginForm() {
   const isAnyPending = isEmailPending || isGooglePending
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div className="space-y-1.5">
         <label className="text-sm text-[#cbd5e1]" htmlFor="email">
           メールアドレス
@@ -105,10 +105,10 @@ export function LoginForm() {
           />
           <button
             type="button"
-            aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
             onClick={() => setShowPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
+            <span className="sr-only">{showPassword ? "パスワードを隠す" : "パスワードを表示"}</span>
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
@@ -140,7 +140,7 @@ export function LoginForm() {
         className="w-full border-white/10 bg-white/5 text-[#f1f5f9] hover:bg-white/10"
       >
         {isGooglePending && <Spinner />}
-        Googleでログイン
+        Googleでサインイン
       </Button>
     </form>
   )

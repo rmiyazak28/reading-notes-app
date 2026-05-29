@@ -96,7 +96,7 @@ export function SignupForm() {
   const isAnyPending = isPending || isGooglePending
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div className="space-y-1.5">
         <label className="text-sm text-[#cbd5e1]" htmlFor="name">
           ユーザー名
@@ -146,10 +146,10 @@ export function SignupForm() {
           />
           <button
             type="button"
-            aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
             onClick={() => setShowPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
+            <span className="sr-only">{showPassword ? "パスワードを隠す" : "パスワードを表示"}</span>
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
@@ -173,10 +173,10 @@ export function SignupForm() {
           />
           <button
             type="button"
-            aria-label={showConfirmPassword ? "パスワードを隠す" : "パスワードを表示"}
             onClick={() => setShowConfirmPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
+            <span className="sr-only">{showConfirmPassword ? "パスワードを隠す" : "パスワードを表示"}</span>
             {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
