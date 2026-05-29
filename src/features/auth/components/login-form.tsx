@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/hooks/use-toast"
+import { Eye, EyeOff } from "lucide-react"
 import { signInWithEmail, signInWithGoogle } from "@/features/auth/actions"
 
 const loginSchema = z.object({
@@ -66,6 +67,8 @@ export function LoginForm() {
     })
   }
 
+  const [showPassword, setShowPassword] = useState(false)
+
   const isAnyPending = isEmailPending || isGooglePending
 
   return (
@@ -91,14 +94,24 @@ export function LoginForm() {
         <label className="text-sm text-[#cbd5e1]" htmlFor="password">
           パスワード
         </label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
-          className="glass border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:bg-white/10 focus:border-primary/50 transition-colors"
-          {...register("password")}
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            className="glass border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:bg-white/10 focus:border-primary/50 transition-colors"
+            {...register("password")}
+          />
+          <button
+            type="button"
+            aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
         {errors.password && (
           <p className="text-sm text-destructive">{errors.password.message}</p>
         )}
