@@ -18,7 +18,13 @@ const signupSchema = z
       .string()
       .min(1, "メールアドレスを入力してください")
       .email("メール形式で入力してください"),
-    password: z.string().min(1, "パスワードを入力してください"),
+    password: z
+      .string()
+      .min(1, "パスワードを入力してください")
+      .min(8, "パスワードは8文字以上で入力してください")
+      .max(72, "パスワードは72文字以内で入力してください")
+      .regex(/[a-zA-Z]/, "英字を1文字以上含めてください")
+      .regex(/[0-9]/, "数字を1文字以上含めてください"),
     confirmPassword: z.string().min(1, "パスワード（確認）を入力してください"),
   })
   .refine((data) => data.password === data.confirmPassword, {
