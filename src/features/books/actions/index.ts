@@ -9,10 +9,29 @@ type GetBooksParams = {
   limit?: number
 }
 
+/**
+ * Supabase の集計クエリが `reading_memos(count)` を `{ count: number }[]` 形式で返すため、
+ * アプリ層の Book 型（memoCount: number）に変換する前の中間型として定義している。
+ * 変換後は {@link Book} にキャストして返す。
+ */
 type RawBook = Omit<Book, "memoCount"> & {
   memoCount: { count: number }[]
 }
 
+/**
+ * ログインユーザーの書籍一覧を取得する Server Action。
+ *
+ * @param params - 絞り込み条件
+ *   - query: タイトル・著者への部分一致（OR 検索）
+ *   - status: 読書状態フィルタ
+ *   - limit: 取得件数の上限
+ * @returns `{ data: Book[], error: null }` または `{ data: null, error: string }`。
+ *   認証未済の場合は error に "UNAUTHORIZED" を返す。
+ * @remarks
+ *   memoCount は Supabase の集計構文（`reading_memos(count)`）を使ってメインクエリで JOIN 取得するが、
+ *   starCount は `favorite=true` に絞ったカウントが必要で、Supabase の集計構文はフィルタ付きカウントを
+ *   同一クエリ内に直接記述できないため、別クエリで取得して Map に変換している。
+ */
 export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Book[] | null; error: string | null }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -39,6 +58,7 @@ export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Boo
 
   const bookIds = booksData.map((b) => b.id)
 
+  // favorite=true のフィルタ付きカウントが必要なため、Supabase の集計構文では対応できず別クエリで取得する。
   const { data: starData } = await supabase
     .from("reading_memos")
     .select("book_id")

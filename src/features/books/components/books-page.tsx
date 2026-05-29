@@ -16,8 +16,12 @@ type Props = {
 
 export function BooksPage({ initialBooks }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [books] = useState<Book[]>(initialBooks)  
+  // サーバーから受け取った initialBooks を state に持つ理由:
+  // 書籍追加モーダルで書籍が追加された際、サーバー再取得なしに setBooks でリストを即時更新するため。
+  const [books] = useState<Book[]>(initialBooks)
   const isMobile = useIsMobile()
+  // キー入力のたびにサーバーリクエストが発生しないよう、初期ロード済みの books を
+  // useMemo でクライアントサイドフィルタする方式にしている。
   const filteredBooks = useMemo(() => {
     if (!searchQuery.trim()) return books
     const query = searchQuery.toLowerCase()
@@ -29,7 +33,7 @@ export function BooksPage({ initialBooks }: Props) {
   }, [books, searchQuery])
 
   const handleAddBook = () => {
-    // TODO: Implement add book modal
+    // TODO: 書籍追加モーダルを実装する。現時点では未実装のためプレースホルダー。
     console.log("Add book clicked")
   }
 
@@ -44,7 +48,8 @@ return (
                 onChange={setSearchQuery}
               />
             </div>
-            {/* Add button - desktop only (mobile has FAB) */}
+            {/* PC はヘッダーと横並びに配置するため hidden md:flex で表示。
+                モバイルは下部 FAB で代替するためここでは非表示にしている。 */}
             <Button
               onClick={handleAddBook}
               className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
@@ -64,6 +69,8 @@ return (
 
         {/* Book list */}
         <div className="mt-4">
+          {/* 設計書の UI 方針に基づき、PC はテーブルレイアウト（BookTable）、
+              モバイルはカードレイアウト（BookCardList）を出し分けている。 */}
           {filteredBooks.length === 0 ? (
             <EmptyState onAddBook={handleAddBook} />
           ) : isMobile ? (
@@ -74,7 +81,8 @@ return (
         </div>
       </main>
 
-      {/* FAB for mobile */}
+      {/* スマホでは親指が届く右下に固定配置することで、スクロール中でも追加操作にアクセスできる。
+          PC ヘッダーのボタンと同じ handleAddBook を呼び出すが、md:hidden で PC では非表示。 */}
       <Button
         onClick={handleAddBook}
         className="md:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 z-50"

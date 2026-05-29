@@ -1,5 +1,12 @@
+/**
+ * 書籍の読書状態。DB の books.status カラム（Enum）の値に対応する。
+ */
 export type ReadingStatus = "unread" | "reading" | "completed"
 
+/**
+ * 書籍エンティティ。
+ * memoCount / starCount は DB カラムではなく {@link getBooks} が算出して付与する集計値のため optional にしている。
+ */
 export interface Book {
   id: string
   user_id: string
