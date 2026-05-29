@@ -37,7 +37,7 @@ test.describe("SCR-01 ログイン画面", () => {
       await page.getByLabel("メールアドレス").fill("nonexistent@example.com");
       await page.getByLabel("パスワード").fill("WrongPass123");
       await page.getByRole("button", { name: "ログイン" }).click();
-      await expect(page.getByText("ログインエラー")).toBeVisible();
+      await expect(page.getByText("ログインエラー", { exact: true })).toBeVisible();
       await expect(page).toHaveURL("/login");
     });
   });
