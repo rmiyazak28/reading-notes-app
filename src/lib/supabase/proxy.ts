@@ -27,7 +27,12 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // createServerClient と getClaims() の間にコードを挟まない
+  // createServerClient と getClaims() の間にコードを挟まない。
+  // Cookie の setAll が呼ばれる前に他の処理が割り込むとセッション更新が壊れる。
+
+  // getSession() はローカル Cookie をそのまま信頼するため偽装可能。
+  // getUser() は毎回 Supabase サーバーへ API リクエストを送るため低速。
+  // getClaims() は JWT 署名をローカルで検証するだけなので安全かつ高速。
   const { data } = await supabase.auth.getClaims()
   const user = data?.claims
 

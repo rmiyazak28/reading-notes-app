@@ -2,7 +2,8 @@
 
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Source_Serif_4 } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next' 
+import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja" className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable}`}>
       <body className="font-sans antialiased min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
         {children}
+        <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

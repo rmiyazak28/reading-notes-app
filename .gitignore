@@ -42,5 +42,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# vscode/cursor
-.vscode
+# test
+e2e/results/
+playwright-report/
+playwright/.cache/
