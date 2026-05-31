@@ -102,7 +102,7 @@ export function MemoTable({ memos, onToggleFavorite, onDelete, onEdit }: MemoTab
                 <TableCell className="text-[#cbd5e1] text-sm">
                   {memo.page_number != null ? `p.${memo.page_number}` : "—"}
                 </TableCell>
-                <TableCell className="overflow-hidden">
+                <TableCell className="overflow-hidden max-w-0 whitespace-normal">
                   <p className="text-[#f1f5f9] text-sm line-clamp-2">{memo.content}</p>
                 </TableCell>
                 <TableCell className="overflow-hidden">
