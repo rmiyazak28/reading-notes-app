@@ -127,7 +127,7 @@ export function Header({ userName }: HeaderProps) {
               <span className="sr-only">メニューを開く</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="glass bg-slate-900/95 border-white/10 flex flex-col p-0">
+          <SheetContent side="right" className="glass bg-slate-900/95 border-white/10 flex flex-col p-0">
             <SheetHeader className="sr-only">
               <SheetTitle>ナビゲーションメニュー</SheetTitle>
             </SheetHeader>

@@ -1,15 +1,16 @@
 "use client"
 
-import type { Book } from "@/lib/books"
-import { StatusBadge } from "@/components/status-badge"
+import { useRouter } from "next/navigation"
+import type { Book } from "@/features/books/types"
+import { StatusBadge } from "@/components/common/status-badge"
 import { FileText, Star } from "lucide-react"
 
 interface BookCardProps {
   book: Book
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("ja-JP", {
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("ja-JP", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -17,11 +18,16 @@ function formatDate(date: Date): string {
 }
 
 export function BookCard({ book }: BookCardProps) {
+  const router = useRouter()
+
   return (
-    <div className="glass rounded-lg p-4 glass-hover cursor-pointer">
+    <div
+      className="glass rounded-lg p-4 glass-hover cursor-pointer"
+      onClick={() => router.push(`/books/${book.id}`)}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[#f1f5f9] truncate">
+          <h3 className="font-medium text-[#f1f5f9] line-clamp-2">
             {book.title}
           </h3>
           <p className="text-sm text-[#cbd5e1] mt-0.5">
@@ -45,7 +51,7 @@ export function BookCard({ book }: BookCardProps) {
           <span>{book.starCount}</span>
         </div>
         <span className="text-xs text-[#cbd5e1]">
-          {formatDate(book.updatedAt)}
+          {formatDate(book.updated_at)}
         </span>
       </div>
     </div>

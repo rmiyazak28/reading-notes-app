@@ -14,8 +14,6 @@ npm run build    # Production build
 npm run lint     # Run ESLint
 ```
 
-There is no test runner configured yet.
-
 ## Tech Stack
 
 | Layer | Technology |
@@ -58,6 +56,11 @@ src/
 ├── constants/
 ├── types/
 └── middleware.ts
+tests/
+├── unit/   # vitest unit tests
+└── e2e/    # Playwright e2e tests
+└── tests/
+└── auth/
 ```
 
 ### Server Actions Pattern
@@ -105,34 +108,34 @@ Several screens have **different implementations by device**:
 - Memo create/edit: modal (MOD-03/04) on PC, dedicated page (SCR-07/08) on mobile
 - Book/memo lists: table on PC, card on mobile
 
-## Absolute Rules
+## Rules
 
-- Do not add libraries without explaining why; always justify `package.json` changes
-- Never edit `.env` files
-- No DROP/DELETE SQL; no auto-generated DB migrations
-- Never `git commit` without user approval; never `git push`
-- Never `rm -rf`
-- Keep changes to ≤ 3 files per task; never do large refactors in one shot
-- Only implement features that exist in the requirements doc
-- Confirm the target screen ID before implementing UI
-
-## Language
-Always respond in Japanese.
-
-## Pre-task Confirmation
-- Before any implementation, modification, or deletion, present the target files and planned changes, and get user approval before proceeding.
-- For changes spanning multiple files, confirm one file at a time.
-- If anything is unclear, always ask rather than proceeding with assumptions.
-
-## Additional Prohibitions
+- Always respond in Japanese.
+- Before starting any implementation, present a list of all files to be created or modified with a summary of planned changes, and get user approval before proceeding. If anything is unclear, ask rather than assuming.
+- Confirm the target screen ID before implementing UI.
+- Only implement features that exist in the requirements doc.
+- Never do large-scale rewrites or refactors in a single task; always propose changes in small, reviewable diffs.
+- Never edit `.env` files.
 - Never delete files or directories (no `rm`, `unlink`, or any equivalent).
-- Never do large-scale rewrites of existing files; always propose changes in small, reviewable diffs.
-- Explain the reason before modifying `package.json` and get approval.
-- Explain the reason before modifying any config file (`next.config.*`, `tailwind.config.*`, `tsconfig.json`, etc.) and get approval.
+- No DROP/DELETE SQL; no auto-generated DB migrations.
+- Never `git push`, `git merge`, or `git commit` without user approval.
+- Before modifying `package.json` or any config file (`next.config.*`, `tailwind.config.*`, `tsconfig.json`, etc.), explain the reason and get approval.
+
+## Code Comments
+
+Write comments only when the reason behind the code is not obvious from reading it.
+
+- Comments must explain **why**, not what.
+- Good: `// Must pull user_id from session to prevent client-side tampering`
+- Bad: `// Get user_id`
 
 ## On Errors
-- Do not attempt to fix errors autonomously; present the error details and confirm the approach with the user first.
-- For build errors or type errors, explain the root cause and proposed fix before making any changes.
+
+All build errors, type errors, and test failures may be fixed autonomously in a self-correction loop.
+
+- After each fix attempt, log one line describing what was changed and why.
+- Attempt the same error a maximum of 3 times.
+- If not resolved after 3 attempts, stop and report: include the error details, fix history, and possible root causes. Wait for instructions.
 
 ## Environment Variables
 
@@ -144,3 +147,62 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY` is used only server-side (e.g., `deleteAccount` action via Supabase Admin API). Never expose it to the client.
+
+## Implementation and Testing Workflow
+
+When asked to implement a screen or modal, execute the following steps in order. Report the result in one line after each step before proceeding. **The only stop point requiring user confirmation is Step 4.**
+
+### Step 1: Implementation
+
+- Present a list of all files to be created or modified with a summary of planned changes. Get user approval before writing any code.
+- Implement based on the design information in CLAUDE.md and the design documents.
+- Write comments only when the reason is not obvious (see `## Code Comments`).
+- Run `npm run build` after implementation. If errors occur, apply the self-correction loop in `## On Errors`.
+- Once the build passes, present the recommended commit message and wait for user approval.
+  - Format: `feat: <画面ID> <内容を日本語で>` (e.g. `feat: MOD-01 書籍登録モーダルを実装`)
+
+### Step 2: Unit Test Decision
+
+Decide whether unit tests are needed and report the reason in one line.
+
+Run unit tests (vitest) when the target includes:
+- Server Actions logic (validation, error handling, branching)
+- Utility functions with multiple branches
+- Custom hooks logic
+
+Skip unit tests when the target is:
+- Simple UI components with no logic
+- Page components that only pass data through
+
+### Step 3: Unit Tests (only when required)
+
+- Create test code under `tests/unit/`.
+- Run `npm run test`. If tests fail, apply the self-correction loop in `## On Errors`.
+- Once all tests pass, present the recommended commit message and wait for user approval.
+  - Format: `test: <画面ID> <内容を日本語で>` (e.g. `test: MOD-01 書籍登録モーダルの単体テストを実施`)
+
+### Step 4: Manual Test Scenario Output — STOP POINT
+
+- Output a manual test scenario to `docs/test/manual/<screen-id>.md`. Include: target screen/modal ID, preconditions, operation steps and expected results per test case, and verification points (responsive layout, validation, error display).
+- Present the recommended commit message and wait for user approval.
+  - Format: `docs: <画面ID> <内容を日本語で>` (e.g. `docs: MOD-01 書籍登録モーダルのマニュアルテストシナリオを作成`)
+- After committing, **stop here and wait** for the user to confirm that manual testing is complete.
+
+### Step 5: E2E Tests
+
+Execute only after the user confirms manual testing is complete.
+
+- Create Playwright e2e test code under `tests/e2e/tests/`.
+- Run `npm run test:e2e`. If tests fail, apply the self-correction loop in `## On Errors`.
+- Once all tests pass, present the recommended commit message and wait for user approval.
+  - Format: `test: <画面ID> <内容を日本語で>` (e.g. `test: MOD-01 書籍登録モーダルのe2eテストを実施`)
+
+### Step 6: Completion Report
+
+Report the following:
+
+- List of implemented files
+- Unit test results (if applicable)
+- E2E test results
+
+All git operations are performed manually by the user.
