@@ -206,13 +206,11 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
               />
             </div>
 
-            {/* 読了日 */}
+            {/* 読了日：読書状態が「読了」の場合のみ表示 */}
+            {watchStatus === "completed" && (
             <div className="space-y-1.5">
               <label className="text-sm text-[#cbd5e1]" htmlFor="edit-completed-at">
-                読了日
-                {watchStatus === "completed" && (
-                  <span className="text-destructive ml-1">*</span>
-                )}
+                読了日 <span className="text-destructive">*</span>
               </label>
               <input
                 id="edit-completed-at"
@@ -224,6 +222,7 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
                 <p className="text-sm text-destructive">{errors.completed_at.message}</p>
               )}
             </div>
+            )}
 
             {/* アクションボタン */}
             <div className="flex items-center justify-between pt-2">
