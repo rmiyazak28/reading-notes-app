@@ -222,7 +222,7 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
         <BookDetailHeader book={book} onEdit={() => setIsEditModalOpen(true)} />
 
         {/* 検索バー + メモ追加ボタン（PC） */}
-        <div className="sticky top-16 z-40 pb-4 -mx-4 px-4 bg-gradient-to-b from-slate-900 via-slate-900/95 to-transparent mt-6">
+        <div className="sticky top-16 z-40 py-3 -mx-4 px-4 bg-slate-900 mt-4">
           <div className="flex items-center justify-between gap-4">
             <div className="w-full max-w-xs">
               <SearchBar
