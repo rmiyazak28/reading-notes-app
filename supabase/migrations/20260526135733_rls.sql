@@ -146,3 +146,14 @@ CREATE POLICY "memo_tags_delete_own"
               AND reading_memos.user_id = auth.uid()
         )
     );
+
+
+-- ------------------------------------------------------------
+-- GRANT
+-- RLS はデフォルト拒否だが、テーブルへのアクセス権限自体も
+-- authenticated ロールに付与しないと permission denied が発生する。
+-- ------------------------------------------------------------
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.books          TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.reading_memos  TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.tags           TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.memo_tags      TO authenticated;
