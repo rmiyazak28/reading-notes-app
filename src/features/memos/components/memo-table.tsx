@@ -102,10 +102,10 @@ export function MemoTable({ memos, onToggleFavorite, onDelete, onEdit }: MemoTab
                 <TableCell className="text-[#cbd5e1] text-sm">
                   {memo.page_number != null ? `p.${memo.page_number}` : "—"}
                 </TableCell>
-                <TableCell className="max-w-0">
+                <TableCell className="overflow-hidden">
                   <p className="text-[#f1f5f9] text-sm line-clamp-2">{memo.content}</p>
                 </TableCell>
-                <TableCell className="max-w-0">
+                <TableCell className="overflow-hidden">
                   <div className="flex flex-wrap gap-1">
                     {memo.tags.map(tag => (
                       <span
