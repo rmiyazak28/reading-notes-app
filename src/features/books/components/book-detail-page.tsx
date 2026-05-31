@@ -100,10 +100,14 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
   }
 
   const handleMemoDeleted = (memoId: string) => {
+    const deletedMemo = memos.find(m => m.id === memoId)
     setMemos(prev => prev.filter(m => m.id !== memoId))
     setBook(prev => ({
       ...prev,
       memoCount: Math.max(0, (prev.memoCount ?? 0) - 1),
+      starCount: deletedMemo?.favorite
+        ? Math.max(0, (prev.starCount ?? 0) - 1)
+        : (prev.starCount ?? 0),
     }))
   }
 
