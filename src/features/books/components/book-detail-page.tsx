@@ -1,30 +1,62 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Plus } from "lucide-react"
+import { useState, useMemo, useTransition } from "react"
+import Link from "next/link"
+import { useRouter, usePathname } from "next/navigation"
+import {
+  Plus,
+  ChevronRight,
+  ArrowLeft,
+  Menu,
+  User,
+  Home,
+  BookOpen,
+  FileText,
+  Star,
+  Settings,
+  LogOut,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { SearchBar } from "@/components/common/search-bar"
 import { BookDetailHeader } from "@/features/books/components/book-detail-header"
 import { BookEditModal } from "@/features/books/components/book-edit-modal"
 import { MemoTable } from "@/features/memos/components/memo-table"
 import { MemoCardList } from "@/features/memos/components/memo-card"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { signOut } from "@/features/auth/actions"
 import type { Book } from "@/features/books/types"
 import type { MemoWithTags } from "@/features/memos/types"
+
+const navItems = [
+  { href: "/home", label: "ホーム", icon: Home },
+  { href: "/books", label: "書籍一覧", icon: BookOpen },
+  { href: "/memos", label: "全メモ検索", icon: FileText },
+  { href: "/favorites", label: "お気に入り", icon: Star },
+]
 
 type Props = {
   initialBook: Book
   initialMemos: MemoWithTags[]
+  userName: string
 }
 
-export function BookDetailPage({ initialBook, initialMemos }: Props) {
+export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
   const isMobile = useIsMobile()
   const [book, setBook] = useState<Book>(initialBook)
   const [memos, setMemos] = useState<MemoWithTags[]>(initialMemos)
   const [searchQuery, setSearchQuery] = useState("")
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isSignOutPending, startSignOutTransition] = useTransition()
 
   // キー入力ごとにサーバーリクエストが発生しないよう、ロード済みメモをクライアントでフィルタする
   const filteredMemos = useMemo(() => {
@@ -36,6 +68,13 @@ export function BookDetailPage({ initialBook, initialMemos }: Props) {
         memo.tags.some(tag => tag.name.toLowerCase().includes(q))
     )
   }, [memos, searchQuery])
+
+  const handleSignOut = () => {
+    startSignOutTransition(async () => {
+      await signOut()
+      router.push("/login")
+    })
+  }
 
   const handleBookUpdated = (updatedBook: Book) => {
     // memoCount / starCount はカウント集計値のため更新結果には含まれない。既存値を引き継ぐ。
@@ -69,7 +108,109 @@ export function BookDetailPage({ initialBook, initialMemos }: Props) {
 
   return (
     <div className="min-h-screen">
+      {/* ── スマホ専用ヘッダーオーバーレイ ──────────────────────────────
+          グローバルヘッダーを視覚的に置き換えるため z-[60]（グローバルの z-50 より上）に配置。
+          ハンバーガーアイコンとドロワーをここに内包することで他画面のヘッダーを変更せずに済む。 */}
+      <div className="md:hidden fixed top-0 inset-x-0 h-16 z-[60] glass border-b border-white/10">
+        <div className="flex items-center justify-between h-full px-4">
+          {/* 戻るボタン */}
+          <Link
+            href="/books"
+            className="flex items-center justify-center h-9 w-9 rounded-lg text-foreground hover:bg-white/10 transition-colors"
+            aria-label="書籍一覧へ戻る"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+
+          {/* 書籍タイトル（中央） */}
+          <span className="flex-1 text-center text-sm font-semibold text-foreground truncate px-3">
+            {book.title}
+          </span>
+
+          {/* ハンバーガー → ナビゲーションドロワー */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-foreground hover:bg-white/10"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">メニューを開く</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="glass bg-slate-900/95 border-white/10 flex flex-col p-0"
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>ナビゲーションメニュー</SheetTitle>
+              </SheetHeader>
+
+              {/* ユーザー情報（タップ不可・表示のみ） */}
+              <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <span className="text-sm font-medium text-foreground truncate">{userName}</span>
+              </div>
+
+              {/* ナビゲーション */}
+              <nav className="flex flex-col gap-1 flex-1 px-4 pt-4">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                        pathname === item.href || pathname.startsWith(item.href + "/")
+                          ? "text-primary bg-white/10"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  )
+                })}
+              </nav>
+
+              {/* 設定・ログアウト */}
+              <div className="flex flex-col gap-1 border-t border-white/10 px-4 py-4">
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                >
+                  <Settings className="h-5 w-5" />
+                  設定
+                </Link>
+                <Button
+                  variant="ghost"
+                  onClick={handleSignOut}
+                  disabled={isSignOutPending}
+                  className="flex items-center gap-3 px-4 py-3 h-auto rounded-lg text-sm font-medium text-destructive hover:text-destructive hover:bg-white/5 justify-start"
+                >
+                  <LogOut className="h-5 w-5" />
+                  ログアウト
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+
       <main className="container mx-auto px-4 py-6">
+        {/* PC パンくずリスト */}
+        <nav className="hidden md:flex items-center gap-1.5 text-sm text-[#94a3b8] mb-4">
+          <Link href="/books" className="hover:text-foreground transition-colors">
+            書籍一覧
+          </Link>
+          <ChevronRight className="h-4 w-4 shrink-0" />
+          <span className="text-[#f1f5f9] truncate max-w-xs">{book.title}</span>
+        </nav>
+
         {/* 書籍ヘッダー */}
         <BookDetailHeader book={book} onEdit={() => setIsEditModalOpen(true)} />
 

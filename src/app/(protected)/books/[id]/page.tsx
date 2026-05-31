@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import { getBook } from "@/features/books/actions"
 import { getMemos } from "@/features/memos/actions"
 import { BookDetailPage } from "@/features/books/components/book-detail-page"
@@ -9,6 +10,10 @@ type Props = {
 
 export default async function Page({ params }: Props) {
   const { id } = await params
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const userName = (user?.user_metadata?.name as string | undefined) ?? user?.email ?? ""
 
   const [bookResult, memosResult] = await Promise.all([
     getBook(id),
@@ -23,6 +28,7 @@ export default async function Page({ params }: Props) {
     <BookDetailPage
       initialBook={bookResult.data!}
       initialMemos={memosResult.data!}
+      userName={userName}
     />
   )
 }
