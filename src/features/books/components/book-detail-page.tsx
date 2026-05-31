@@ -57,6 +57,7 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isSignOutPending, startSignOutTransition] = useTransition()
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   // キー入力ごとにサーバーリクエストが発生しないよう、ロード済みメモをクライアントでフィルタする
   const filteredMemos = useMemo(() => {
@@ -128,7 +129,7 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
           </span>
 
           {/* ハンバーガー → ナビゲーションドロワー */}
-          <Sheet>
+          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
@@ -163,6 +164,7 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={() => setIsDrawerOpen(false)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                         pathname === item.href || pathname.startsWith(item.href + "/")
@@ -181,6 +183,7 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
               <div className="flex flex-col gap-1 border-t border-white/10 px-4 py-4">
                 <Link
                   href="/settings"
+                  onClick={() => setIsDrawerOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
                 >
                   <Settings className="h-5 w-5" />

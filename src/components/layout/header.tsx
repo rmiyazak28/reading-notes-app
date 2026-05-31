@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -47,6 +47,7 @@ export function Header({ userName }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   const handleSignOut = () => {
     startTransition(async () => {
@@ -120,7 +121,7 @@ export function Header({ userName }: HeaderProps) {
         </div>
 
         {/* Mobile Hamburger */}
-        <Sheet>
+        <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
           <SheetTrigger asChild className="md:hidden">
             <Button variant="ghost" size="icon" className="text-foreground hover:bg-white/10">
               <Menu className="h-5 w-5" />
@@ -148,6 +149,7 @@ export function Header({ userName }: HeaderProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setIsDrawerOpen(false)}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                       isActive(item.href)
@@ -166,6 +168,7 @@ export function Header({ userName }: HeaderProps) {
             <div className="flex flex-col gap-1 border-t border-white/10 px-4 py-4">
               <Link
                 href="/settings"
+                onClick={() => setIsDrawerOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
               >
                 <Settings className="h-5 w-5" />
