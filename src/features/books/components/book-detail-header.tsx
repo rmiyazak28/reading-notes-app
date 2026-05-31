@@ -32,6 +32,7 @@ export function BookDetailHeader({ book, onEdit }: BookDetailHeaderProps) {
           variant="ghost"
           size="sm"
           onClick={onEdit}
+          aria-label="書籍を編集"
           className="shrink-0 text-[#94a3b8] hover:text-foreground hover:bg-white/10 gap-1.5"
         >
           <Edit3 className="h-4 w-4" />
