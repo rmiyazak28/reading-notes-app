@@ -68,6 +68,112 @@ export async function createBook(input: CreateBookInput): Promise<ActionResult<B
   }
 }
 
+type UpdateBookInput = {
+  title: string
+  author: string | null
+  genre: string | null
+  status: ReadingStatus
+  completed_at: string | null
+}
+
+const updateBookSchema = z.object({
+  title: z.string().min(1, "タイトルは必須です").max(255, "255文字以内で入力してください"),
+  author: z.string().max(255, "255文字以内で入力してください").nullable(),
+  genre: z.string().max(100, "100文字以内で入力してください").nullable(),
+  status: z.enum(["unread", "reading", "completed"]),
+  completed_at: z.string().nullable(),
+})
+
+export async function getBook(id: string): Promise<ActionResult<Book>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
+
+  const { data, error } = await supabase
+    .from("books")
+    .select("*, memoCount:reading_memos(count)")
+    .eq("id", id)
+    .single()
+
+  if (error) {
+    // PGRST116: 0行または複数行 = 書籍が存在しないか他ユーザーの書籍（RLSで非表示）
+    if (error.code === "PGRST116") {
+      return { data: null, error: { code: "NOT_FOUND", message: "書籍が見つかりません" } }
+    }
+    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  }
+
+  const { data: starData } = await supabase
+    .from("reading_memos")
+    .select("id")
+    .eq("book_id", id)
+    .eq("favorite", true)
+
+  const book: Book = {
+    ...(data as unknown as RawBook),
+    memoCount: (data as unknown as RawBook).memoCount[0]?.count ?? 0,
+    starCount: starData?.length ?? 0,
+  }
+
+  return { data: book, error: null }
+}
+
+export async function updateBook(id: string, input: UpdateBookInput): Promise<ActionResult<Book>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
+
+  const parsed = updateBookSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
+  // status が completed でない場合は completed_at を null にクリアする
+  let completedAt = parsed.data.completed_at
+  if (parsed.data.status === "completed" && !completedAt) {
+    completedAt = new Date().toISOString().split("T")[0]
+  } else if (parsed.data.status !== "completed") {
+    completedAt = null
+  }
+
+  const { data, error } = await supabase
+    .from("books")
+    .update({
+      title: parsed.data.title,
+      author: parsed.data.author,
+      genre: parsed.data.genre,
+      status: parsed.data.status,
+      completed_at: completedAt,
+    })
+    .eq("id", id)
+    .select()
+    .single()
+
+  if (error) {
+    if (error.code === "23505") {
+      return { data: null, error: { code: "VALIDATION", message: "同じタイトルの書籍がすでに登録されています" } }
+    }
+    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  }
+
+  return { data: { ...data, memoCount: 0, starCount: 0 }, error: null }
+}
+
+export async function deleteBook(id: string): Promise<ActionResult<void>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
+
+  const { error } = await supabase
+    .from("books")
+    .delete()
+    .eq("id", id)
+
+  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+
+  return { data: undefined, error: null }
+}
+
 type GetBooksParams = {
   query?: string
   status?: ReadingStatus
