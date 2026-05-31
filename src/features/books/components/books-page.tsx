@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/common/search-bar"
 import { BookTable } from "@/features/books/components/book-table"
 import { BookCardList } from "@/features/books/components/book-card"
+import { BookRegisterModal } from "@/features/books/components/book-register-modal"
 import { EmptyState } from "@/components/common/empty-state"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Book } from "@/features/books/types"
@@ -18,7 +19,8 @@ export function BooksPage({ initialBooks }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
   // サーバーから受け取った initialBooks を state に持つ理由:
   // 書籍追加モーダルで書籍が追加された際、サーバー再取得なしに setBooks でリストを即時更新するため。
-  const [books] = useState<Book[]>(initialBooks)
+  const [books, setBooks] = useState<Book[]>(initialBooks)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const isMobile = useIsMobile()
   // キー入力のたびにサーバーリクエストが発生しないよう、初期ロード済みの books を
   // useMemo でクライアントサイドフィルタする方式にしている。
@@ -32,9 +34,10 @@ export function BooksPage({ initialBooks }: Props) {
     )
   }, [books, searchQuery])
 
-  const handleAddBook = () => {
-    // TODO: 書籍追加モーダルを実装する。現時点では未実装のためプレースホルダー。
-    console.log("Add book clicked")
+  const handleAddBook = () => setIsModalOpen(true)
+
+  const handleBookCreated = (newBook: Book) => {
+    setBooks((prev) => [newBook, ...prev])
   }
 
 return (
@@ -91,6 +94,12 @@ return (
         <Plus className="h-6 w-6" />
         <span className="sr-only">書籍を追加</span>
       </Button>
+
+      <BookRegisterModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSuccess={handleBookCreated}
+      />
     </div>
   )
 }

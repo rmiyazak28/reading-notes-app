@@ -1,7 +1,72 @@
 "use server"
 
+import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import type { Book, ReadingStatus } from "@/features/books/types"
+
+type ActionError = {
+  code: "UNAUTHORIZED" | "VALIDATION" | "NOT_FOUND" | "DB_ERROR" | "UNKNOWN"
+  message: string
+}
+
+type ActionResult<T> =
+  | { data: T; error: null }
+  | { data: null; error: ActionError }
+
+type CreateBookInput = {
+  title: string
+  author: string | null
+  genre: string | null
+  status: ReadingStatus
+}
+
+const createBookSchema = z.object({
+  title: z.string().min(1, "タイトルは必須です").max(255, "255文字以内で入力してください"),
+  author: z.string().max(255, "255文字以内で入力してください").nullable(),
+  genre: z.string().max(100, "100文字以内で入力してください").nullable(),
+  status: z.enum(["unread", "reading", "completed"]),
+})
+
+/**
+ * 書籍を新規登録する Server Action。
+ * user_id はセッションから取得し、クライアントからは受け取らない。
+ * タイトルの重複（同一ユーザー内）は DB の UNIQUE 制約で弾く。
+ */
+export async function createBook(input: CreateBookInput): Promise<ActionResult<Book>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
+
+  const parsed = createBookSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
+  const { data, error } = await supabase
+    .from("books")
+    .insert({
+      user_id: user.id,
+      title: parsed.data.title,
+      author: parsed.data.author,
+      genre: parsed.data.genre,
+      status: parsed.data.status,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    // DB の UNIQUE 制約違反（同一ユーザーで同タイトルが既存）
+    if (error.code === "23505") {
+      return { data: null, error: { code: "VALIDATION", message: "同じタイトルの書籍がすでに登録されています" } }
+    }
+    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  }
+
+  return {
+    data: { ...data, memoCount: 0, starCount: 0 },
+    error: null,
+  }
+}
 
 type GetBooksParams = {
   query?: string
