@@ -30,16 +30,16 @@ export function BookTable({ books }: BookTableProps) {
 
   return (
     <div className="glass rounded-lg overflow-hidden">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-white/15 hover:bg-transparent">
-            <TableHead className="text-[#94a3b8] bg-white/5">タイトル</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5">著者</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5">ジャンル</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5">読書状態</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 text-center">メモ数</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5">★メモ</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5">更新日</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[26%]">タイトル</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[18%]">著者</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[14%]">ジャンル</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[14%]">読書状態</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[9%] text-center">メモ数</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[9%]">★メモ</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[10%]">更新日</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -49,10 +49,11 @@ export function BookTable({ books }: BookTableProps) {
               className="border-white/15 hover:bg-white/5 transition-colors cursor-pointer"
               onClick={() => router.push(`/books/${book.id}`)}
             >
-              <TableCell className="font-medium text-[#f1f5f9]">
+              {/* max-w-0 は table-fixed 環境で truncate を機能させるために必要 */}
+              <TableCell className="font-medium text-[#f1f5f9] max-w-0 truncate" title={book.title}>
                 {book.title}
               </TableCell>
-              <TableCell className="text-[#cbd5e1]">
+              <TableCell className="text-[#cbd5e1] max-w-0 truncate" title={book.author ?? undefined}>
                 {book.author}
               </TableCell>
               <TableCell className="text-[#cbd5e1]">

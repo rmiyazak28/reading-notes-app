@@ -27,7 +27,7 @@ export function BookCard({ book }: BookCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[#f1f5f9] truncate">
+          <h3 className="font-medium text-[#f1f5f9] line-clamp-2">
             {book.title}
           </h3>
           <p className="text-sm text-[#cbd5e1] mt-0.5">
