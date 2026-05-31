@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -72,7 +72,7 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
 
   const todayStr = new Date().toISOString().split("T")[0]
 
-  const { register, handleSubmit, control, watch, formState: { errors } } =
+  const { register, handleSubmit, control, watch, reset, formState: { errors } } =
     useForm<BookEditFormValues>({
       resolver: zodResolver(bookEditSchema),
       // values でなく defaultValues を使うと book prop 変化時に再初期化されないため values を使用
@@ -84,6 +84,19 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
         completed_at: book.completed_at ?? todayStr,
       },
     })
+
+  // キャンセルや Escape で閉じたとき、未保存の編集内容を破棄して現在の書籍データに戻す
+  useEffect(() => {
+    if (!open) {
+      reset({
+        title: book.title,
+        author: book.author ?? "",
+        genre: book.genre ?? "",
+        status: book.status,
+        completed_at: book.completed_at ?? todayStr,
+      })
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const watchStatus = watch("status")
 
