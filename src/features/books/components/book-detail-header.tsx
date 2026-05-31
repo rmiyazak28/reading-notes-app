@@ -39,9 +39,22 @@ export function BookDetailHeader({ book, onEdit }: BookDetailHeaderProps) {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-sm text-[#cbd5e1]">
+      {/* PC: 2カラムグリッド（ジャンル|読書状態、登録日|読了日） */}
+      <div className="hidden md:grid grid-cols-2 gap-x-8 gap-y-2 mt-4 text-sm text-[#cbd5e1]">
+        <span>{book.genre ? `ジャンル: ${book.genre}` : ""}</span>
+        <span className="flex items-center gap-2">
+          読書状態: <StatusBadge status={book.status} />
+        </span>
+        <span>登録日: {formatDate(book.created_at)}</span>
+        <span>{book.completed_at ? `読了日: ${formatDate(book.completed_at)}` : ""}</span>
+      </div>
+
+      {/* スマホ: 縦並び */}
+      <div className="md:hidden flex flex-col gap-2 mt-4 text-sm text-[#cbd5e1]">
         {book.genre && <span>ジャンル: {book.genre}</span>}
-        <StatusBadge status={book.status} />
+        <span className="flex items-center gap-2">
+          読書状態: <StatusBadge status={book.status} />
+        </span>
         <span>登録日: {formatDate(book.created_at)}</span>
         {book.completed_at && (
           <span>読了日: {formatDate(book.completed_at)}</span>
@@ -55,7 +68,7 @@ export function BookDetailHeader({ book, onEdit }: BookDetailHeaderProps) {
         </div>
         <div className="flex items-center gap-1.5 text-[#cbd5e1]">
           <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-          <span className="text-sm">★重要 {book.starCount ?? 0} 件</span>
+          <span className="text-sm">お気に入り {book.starCount ?? 0} 件</span>
         </div>
       </div>
     </div>
