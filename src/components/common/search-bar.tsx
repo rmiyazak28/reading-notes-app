@@ -16,7 +16,8 @@ export function SearchBar({
 }: SearchBarProps) {
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* glass クラスの backdrop-filter がスタッキングコンテキストを生成するため z-10 で前面に出す */}
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
       <Input
         type="search"
         placeholder={placeholder}
