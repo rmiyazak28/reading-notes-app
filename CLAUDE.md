@@ -120,6 +120,7 @@ Several screens have **different implementations by device**:
 - No DROP/DELETE SQL; no auto-generated DB migrations.
 - Never `git push`, `git merge`, or `git commit` without user approval.
 - Before modifying `package.json` or any config file (`next.config.*`, `tailwind.config.*`, `tsconfig.json`, etc.), explain the reason and get approval.
+- When constructing git commit commands, always use multiple `-m` flags instead of heredoc (`<<'EOF'`) syntax. Heredoc causes parse errors in some shell environments.
 
 ## Code Comments
 
