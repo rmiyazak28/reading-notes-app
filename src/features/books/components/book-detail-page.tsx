@@ -27,13 +27,14 @@ import {
 import { SearchBar } from "@/components/common/search-bar"
 import { BookDetailHeader } from "@/features/books/components/book-detail-header"
 import { BookEditModal } from "@/features/books/components/book-edit-modal"
+import { MemoCreateModal } from "@/features/memos/components/memo-create-modal"
 import { MemoTable } from "@/features/memos/components/memo-table"
 import { MemoCardList } from "@/features/memos/components/memo-card"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { signOut } from "@/features/auth/actions"
 import type { Book } from "@/features/books/types"
-import type { MemoWithTags } from "@/features/memos/types"
+import type { MemoWithTags, Tag } from "@/features/memos/types"
 
 const navItems = [
   { href: "/home", label: "ホーム", icon: Home },
@@ -45,17 +46,20 @@ const navItems = [
 type Props = {
   initialBook: Book
   initialMemos: MemoWithTags[]
+  initialTags: Tag[]
   userName: string
 }
 
-export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
+export function BookDetailPage({ initialBook, initialMemos, initialTags, userName }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const isMobile = useIsMobile()
   const [book, setBook] = useState<Book>(initialBook)
   const [memos, setMemos] = useState<MemoWithTags[]>(initialMemos)
+  const [tags, setTags] = useState<Tag[]>(initialTags)
   const [searchQuery, setSearchQuery] = useState("")
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isCreateMemoModalOpen, setIsCreateMemoModalOpen] = useState(false)
   const [isSignOutPending, startSignOutTransition] = useTransition()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
@@ -87,8 +91,26 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
   }
 
   const handleAddMemo = () => {
-    // TODO: MOD-03（PC）/ SCR-07（スマホ）実装後に接続する
-    console.log("Add memo - not yet implemented")
+    if (isMobile) {
+      router.push(`/books/${book.id}/memo/new`)
+    } else {
+      setIsCreateMemoModalOpen(true)
+    }
+  }
+
+  const handleMemoCreated = (memo: MemoWithTags) => {
+    setMemos(prev => [memo, ...prev])
+    setBook(prev => ({
+      ...prev,
+      memoCount: (prev.memoCount ?? 0) + 1,
+      starCount: memo.favorite ? (prev.starCount ?? 0) + 1 : (prev.starCount ?? 0),
+    }))
+    // 新規タグがあれば suggestions に追加
+    const existingIds = new Set(tags.map(t => t.id))
+    const newTags = memo.tags.filter(t => !existingIds.has(t.id))
+    if (newTags.length > 0) {
+      setTags(prev => [...prev, ...newTags].sort((a, b) => a.name.localeCompare(b.name)))
+    }
   }
 
   const handleToggleFavorite = (memoId: string, newFavorite: boolean) => {
@@ -282,6 +304,14 @@ export function BookDetailPage({ initialBook, initialMemos, userName }: Props) {
         onOpenChange={setIsEditModalOpen}
         onSuccess={handleBookUpdated}
         onDelete={handleBookDeleted}
+      />
+
+      <MemoCreateModal
+        bookId={book.id}
+        open={isCreateMemoModalOpen}
+        onOpenChange={setIsCreateMemoModalOpen}
+        onSuccess={handleMemoCreated}
+        tagSuggestions={tags}
       />
     </div>
   )
