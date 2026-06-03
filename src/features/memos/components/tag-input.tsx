@@ -82,7 +82,7 @@ export function TagInput({ selected, suggestions, onChange }: Props) {
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }}
-              className="hover:text-destructive transition-colors"
+              className="inline-flex items-center hover:text-destructive transition-colors"
               aria-label={`${tag.name}を削除`}
             >
               <X className="h-3 w-3" />
