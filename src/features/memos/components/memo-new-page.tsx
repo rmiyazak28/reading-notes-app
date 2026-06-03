@@ -123,7 +123,7 @@ export function MemoNewPage({ book, tagSuggestions }: Props) {
               id="content"
               rows={8}
               placeholder="読書メモを入力..."
-              className="glass border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:bg-white/10 focus:border-primary/50 transition-colors resize-none"
+              className="glass border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:bg-white/10 focus:border-primary/50 transition-colors resize-none max-h-64 overflow-y-auto"
               {...register("content")}
             />
             {errors.content && (
