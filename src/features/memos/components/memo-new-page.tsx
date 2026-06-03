@@ -67,7 +67,6 @@ export function MemoNewPage({ book, tagSuggestions }: Props) {
 
       toast({ title: "メモを登録しました" })
       router.push(`/books/${book.id}`)
-      router.refresh()
     })
   }
 
