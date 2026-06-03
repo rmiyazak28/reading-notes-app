@@ -93,7 +93,7 @@ export async function deleteMemo(id: string): Promise<ActionResult<void>> {
   return { data: undefined, error: null }
 }
 
-export async function getUserTags(): Promise<ActionResult<Tag[]>> {
+export async function getTags(): Promise<ActionResult<Tag[]>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
@@ -109,37 +109,16 @@ export async function getUserTags(): Promise<ActionResult<Tag[]>> {
   return { data: data as Tag[], error: null }
 }
 
-const createTagSchema = z.object({
-  name: z.string().min(1, "タグ名は必須です").max(50, "50文字以内で入力してください"),
-})
-
-export async function createTag(name: string): Promise<ActionResult<Tag>> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
-
-  const parsed = createTagSchema.safeParse({ name })
-  if (!parsed.success) {
-    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
-  }
-
-  // 同名タグが既存なら upsert して返す
-  const { data, error } = await supabase
-    .from("tags")
-    .upsert({ user_id: user.id, name: parsed.data.name }, { onConflict: "user_id,name" })
-    .select("id, name")
-    .single()
-
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
-
-  return { data: data as Tag, error: null }
-}
-
 const createMemoSchema = z.object({
   book_id: z.uuid(),
   page_number: z.number().int().min(1).nullable(),
   content: z.string().min(1, "メモ内容は必須です").max(5000, "5000文字以内で入力してください"),
-  tag_ids: z.array(z.uuid()),
+  tags: z.array(
+    z.object({
+      id: z.uuid().optional(),
+      name: z.string().min(1).max(50),
+    })
+  ).optional(),
   favorite: z.boolean(),
 })
 
@@ -147,7 +126,7 @@ type CreateMemoInput = {
   book_id: string
   page_number: number | null
   content: string
-  tag_ids: string[]
+  tags?: { id?: string; name: string }[]
   favorite: boolean
 }
 
@@ -175,24 +154,44 @@ export async function createMemo(input: CreateMemoInput): Promise<ActionResult<M
 
   if (memoError) return { data: null, error: { code: "DB_ERROR", message: memoError.message } }
 
-  if (parsed.data.tag_ids.length > 0) {
+  const tags = parsed.data.tags ?? []
+  const resolvedTagIds: string[] = []
+
+  for (const tag of tags) {
+    if (tag.id) {
+      resolvedTagIds.push(tag.id)
+    } else {
+      // 新規タグ：同名が既存なら既存idを返す、なければINSERT
+      const { data: upserted, error: upsertError } = await supabase
+        .from("tags")
+        .upsert(
+          { user_id: user.id, name: tag.name },
+          { onConflict: "user_id,name", ignoreDuplicates: false }
+        )
+        .select("id, name")
+        .single()
+
+      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: upsertError.message } }
+      resolvedTagIds.push(upserted.id)
+    }
+  }
+
+  if (resolvedTagIds.length > 0) {
     const { error: tagError } = await supabase
       .from("memo_tags")
-      .insert(parsed.data.tag_ids.map(tag_id => ({ memo_id: memo.id, tag_id })))
+      .insert(resolvedTagIds.map(tag_id => ({ memo_id: memo.id, tag_id })))
 
     if (tagError) return { data: null, error: { code: "DB_ERROR", message: tagError.message } }
   }
 
-  // 作成したメモにタグ情報を付けて返す（タグ名は tag_ids から取得）
-  const { data: tags, error: tagsError } = await supabase
-    .from("tags")
-    .select("id, name")
-    .in("id", parsed.data.tag_ids)
+  const { data: resolvedTags, error: tagsError } = resolvedTagIds.length > 0
+    ? await supabase.from("tags").select("id, name").in("id", resolvedTagIds)
+    : { data: [], error: null }
 
   if (tagsError) return { data: null, error: { code: "DB_ERROR", message: tagsError.message } }
 
   return {
-    data: { ...memo, tags: (tags ?? []) as Tag[] },
+    data: { ...memo, tags: (resolvedTags ?? []) as Tag[] },
     error: null,
   }
 }

@@ -3,6 +3,11 @@ export interface Tag {
   name: string
 }
 
+// UI上の表現。idなしは新規作成予定のタグ（DB未登録）
+export type TagEntry =
+  | { id: string; name: string }
+  | { id?: undefined; name: string }
+
 export interface Memo {
   id: string
   user_id: string

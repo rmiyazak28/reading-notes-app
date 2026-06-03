@@ -22,7 +22,7 @@ const memoCreateSchema = z.object({
     { message: "1以上の整数で入力してください" }
   ),
   content: z.string().min(1, "メモ内容は必須です").max(5000, "5000文字以内で入力してください"),
-  tags: z.array(z.object({ id: z.string(), name: z.string() })),
+  tags: z.array(z.object({ id: z.string().optional(), name: z.string() })),
   favorite: z.boolean(),
 })
 
@@ -56,7 +56,7 @@ export function MemoNewPage({ book, tagSuggestions }: Props) {
         book_id: book.id,
         page_number: values.page_number ? Number(values.page_number) : null,
         content: values.content,
-        tag_ids: values.tags.map(t => t.id),
+        tags: values.tags,
         favorite: values.favorite,
       })
 

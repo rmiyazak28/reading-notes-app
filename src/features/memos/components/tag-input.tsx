@@ -1,28 +1,27 @@
 "use client"
 
-import { useState, useRef, useTransition } from "react"
-import { X, Plus, Loader2 } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
-import { createTag } from "@/features/memos/actions"
-import type { Tag } from "@/features/memos/types"
+import { useState, useRef } from "react"
+import { X, Plus } from "lucide-react"
+import type { TagEntry } from "@/features/memos/types"
 
 type Props = {
-  selected: Tag[]
-  suggestions: Tag[]
-  onChange: (tags: Tag[]) => void
+  selected: TagEntry[]
+  suggestions: { id: string; name: string }[]
+  onChange: (tags: TagEntry[]) => void
 }
 
 export function TagInput({ selected, suggestions, onChange }: Props) {
   const [inputValue, setInputValue] = useState("")
   const [isOpen, setIsOpen] = useState(false)
-  const [isCreating, startCreateTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const trimmed = inputValue.trim()
-  const selectedIds = new Set(selected.map(t => t.id))
+  const selectedNames = new Set(selected.map(t => t.name.toLowerCase()))
 
   const filtered = suggestions.filter(
-    t => !selectedIds.has(t.id) && t.name.toLowerCase().includes(trimmed.toLowerCase())
+    t =>
+      !selectedNames.has(t.name.toLowerCase()) &&
+      t.name.toLowerCase().includes(trimmed.toLowerCase())
   )
 
   const canCreate =
@@ -30,34 +29,30 @@ export function TagInput({ selected, suggestions, onChange }: Props) {
     trimmed.length <= 50 &&
     !suggestions.some(t => t.name.toLowerCase() === trimmed.toLowerCase())
 
-  const addTag = (tag: Tag) => {
-    if (selectedIds.has(tag.id)) return
+  const addTag = (tag: { id: string; name: string }) => {
+    if (selectedNames.has(tag.name.toLowerCase())) return
     onChange([...selected, tag])
     setInputValue("")
     setIsOpen(false)
     inputRef.current?.focus()
   }
 
-  const removeTag = (id: string) => {
-    onChange(selected.filter(t => t.id !== id))
+  const removeTag = (name: string) => {
+    onChange(selected.filter(t => t.name !== name))
   }
 
   const handleCreate = () => {
     if (!trimmed) return
-    startCreateTransition(async () => {
-      const result = await createTag(trimmed)
-      if (result.error) {
-        toast({ title: "タグ作成エラー", description: result.error.message, variant: "destructive" })
-        return
-      }
-      addTag(result.data)
-    })
+    if (selectedNames.has(trimmed.toLowerCase())) return
+    onChange([...selected, { name: trimmed }])
+    setInputValue("")
+    setIsOpen(false)
+    inputRef.current?.focus()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault()
-      // 候補が1件だけならそれを選択、なければ新規作成
       if (filtered.length === 1) {
         addTag(filtered[0])
       } else if (canCreate) {
@@ -68,7 +63,7 @@ export function TagInput({ selected, suggestions, onChange }: Props) {
       setIsOpen(false)
     }
     if (e.key === "Backspace" && !inputValue && selected.length > 0) {
-      removeTag(selected[selected.length - 1].id)
+      removeTag(selected[selected.length - 1].name)
     }
   }
 
@@ -80,13 +75,13 @@ export function TagInput({ selected, suggestions, onChange }: Props) {
       >
         {selected.map(tag => (
           <span
-            key={tag.id}
+            key={tag.name}
             className="inline-flex items-center gap-1 text-xs bg-primary/20 text-primary border border-primary/30 rounded px-1.5 py-0.5"
           >
             #{tag.name}
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); removeTag(tag.id) }}
+              onClick={(e) => { e.stopPropagation(); removeTag(tag.name) }}
               className="hover:text-destructive transition-colors"
               aria-label={`${tag.name}を削除`}
             >
@@ -107,7 +102,6 @@ export function TagInput({ selected, suggestions, onChange }: Props) {
           placeholder={selected.length === 0 ? "タグを入力..." : ""}
           className="flex-1 min-w-24 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
         />
-        {isCreating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground self-center" />}
       </div>
 
       {isOpen && (filtered.length > 0 || canCreate) && (

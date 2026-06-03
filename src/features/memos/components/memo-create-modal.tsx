@@ -18,7 +18,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { TagInput } from "@/features/memos/components/tag-input"
 import { toast } from "@/hooks/use-toast"
 import { createMemo } from "@/features/memos/actions"
-import type { MemoWithTags, Tag } from "@/features/memos/types"
+import type { MemoWithTags, Tag, TagEntry } from "@/features/memos/types"
 
 const memoCreateSchema = z.object({
   page_number: z.string().refine(
@@ -26,7 +26,7 @@ const memoCreateSchema = z.object({
     { message: "1以上の整数で入力してください" }
   ),
   content: z.string().min(1, "メモ内容は必須です").max(5000, "5000文字以内で入力してください"),
-  tags: z.array(z.object({ id: z.string(), name: z.string() })),
+  tags: z.array(z.object({ id: z.string().optional(), name: z.string() })),
   favorite: z.boolean(),
 })
 
@@ -68,7 +68,7 @@ export function MemoCreateModal({ bookId, open, onOpenChange, onSuccess, tagSugg
         book_id: bookId,
         page_number: values.page_number ? Number(values.page_number) : null,
         content: values.content,
-        tag_ids: values.tags.map(t => t.id),
+        tags: values.tags,
         favorite: values.favorite,
       })
 

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { getBook } from "@/features/books/actions"
-import { getMemos, getUserTags } from "@/features/memos/actions"
+import { getMemos, getTags } from "@/features/memos/actions"
 import { BookDetailPage } from "@/features/books/components/book-detail-page"
 
 type Props = {
@@ -18,7 +18,7 @@ export default async function Page({ params }: Props) {
   const [bookResult, memosResult, tagsResult] = await Promise.all([
     getBook(id),
     getMemos({ bookId: id }),
-    getUserTags(),
+    getTags(),
   ])
 
   if (bookResult.error?.code === "NOT_FOUND") notFound()
