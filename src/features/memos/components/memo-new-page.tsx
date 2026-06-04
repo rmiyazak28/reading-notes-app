@@ -94,7 +94,7 @@ export function MemoNewPage({ book, tagSuggestions }: Props) {
       <main className="container mx-auto px-4 pt-24 pb-8">
         <p className="text-xs text-[#94a3b8] mb-6 truncate">{book.title}</p>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
           {/* ページ数 */}
           <div className="space-y-1.5">
             <label className="text-sm text-[#cbd5e1]" htmlFor="page-number">
