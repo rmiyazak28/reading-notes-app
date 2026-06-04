@@ -43,7 +43,7 @@ export function BooksPage({ initialBooks }: Props) {
 return (
     <div className="min-h-screen">
       <main className="container mx-auto px-4 py-6">        {/* Search bar - sticky on scroll */}
-        <div className="sticky top-16 z-40 pb-4 -mx-4 px-4 bg-gradient-to-b from-slate-900 via-slate-900/95 to-transparent">
+        <div className="sticky top-16 z-40 pb-4 -mx-4 px-4 bg-transparent backdrop-blur-md">
           <div className="flex items-center justify-between gap-4">
             <div className="w-full max-w-xs">
               <SearchBar
