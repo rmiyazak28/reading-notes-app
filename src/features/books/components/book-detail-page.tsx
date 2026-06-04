@@ -28,6 +28,7 @@ import { SearchBar } from "@/components/common/search-bar"
 import { BookDetailHeader } from "@/features/books/components/book-detail-header"
 import { BookEditModal } from "@/features/books/components/book-edit-modal"
 import { MemoCreateModal } from "@/features/memos/components/memo-create-modal"
+import { MemoEditModal } from "@/features/memos/components/memo-edit-modal"
 import { MemoTable } from "@/features/memos/components/memo-table"
 import { MemoCardList } from "@/features/memos/components/memo-card"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -60,6 +61,7 @@ export function BookDetailPage({ initialBook, initialMemos, initialTags, userNam
   const [searchQuery, setSearchQuery] = useState("")
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCreateMemoModalOpen, setIsCreateMemoModalOpen] = useState(false)
+  const [editingMemo, setEditingMemo] = useState<MemoWithTags | null>(null)
   const [isSignOutPending, startSignOutTransition] = useTransition()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
@@ -119,6 +121,31 @@ export function BookDetailPage({ initialBook, initialMemos, initialTags, userNam
       ...prev,
       starCount: (prev.starCount ?? 0) + (newFavorite ? 1 : -1),
     }))
+  }
+
+  const handleEditMemo = (memo: MemoWithTags) => {
+    if (isMobile) {
+      router.push(`/memos/${memo.id}/edit`)
+    } else {
+      setEditingMemo(memo)
+    }
+  }
+
+  const handleMemoUpdated = (updated: MemoWithTags) => {
+    const prev = memos.find(m => m.id === updated.id)
+    setMemos(memos => memos.map(m => m.id === updated.id ? updated : m))
+    if (prev) {
+      setBook(b => ({
+        ...b,
+        starCount: (b.starCount ?? 0) + (updated.favorite ? 1 : 0) - (prev.favorite ? 1 : 0),
+      }))
+    }
+    // 新規タグがあれば suggestions に追加
+    const existingIds = new Set(tags.map(t => t.id))
+    const newTags = updated.tags.filter(t => !existingIds.has(t.id))
+    if (newTags.length > 0) {
+      setTags(prev => [...prev, ...newTags].sort((a, b) => a.name.localeCompare(b.name)))
+    }
   }
 
   const handleMemoDeleted = (memoId: string) => {
@@ -277,12 +304,14 @@ export function BookDetailPage({ initialBook, initialMemos, initialTags, userNam
               memos={filteredMemos}
               onToggleFavorite={handleToggleFavorite}
               onDelete={handleMemoDeleted}
+              onEdit={handleEditMemo}
             />
           ) : (
             <MemoTable
               memos={filteredMemos}
               onToggleFavorite={handleToggleFavorite}
               onDelete={handleMemoDeleted}
+              onEdit={handleEditMemo}
             />
           )}
         </div>
@@ -311,6 +340,15 @@ export function BookDetailPage({ initialBook, initialMemos, initialTags, userNam
         open={isCreateMemoModalOpen}
         onOpenChange={setIsCreateMemoModalOpen}
         onSuccess={handleMemoCreated}
+        tagSuggestions={tags}
+      />
+
+      <MemoEditModal
+        memo={editingMemo}
+        open={editingMemo !== null}
+        onOpenChange={(open) => { if (!open) setEditingMemo(null) }}
+        onSuccess={handleMemoUpdated}
+        onDelete={handleMemoDeleted}
         tagSuggestions={tags}
       />
     </div>

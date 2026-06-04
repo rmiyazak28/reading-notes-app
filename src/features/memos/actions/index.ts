@@ -109,6 +109,127 @@ export async function getTags(): Promise<ActionResult<Tag[]>> {
   return { data: data as Tag[], error: null }
 }
 
+export async function getMemo(id: string): Promise<ActionResult<MemoWithTags>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
+
+  const { data, error } = await supabase
+    .from("reading_memos")
+    .select(`
+      *,
+      memo_tags (
+        tags (id, name)
+      )
+    `)
+    .eq("id", id)
+    .single()
+
+  if (error) return { data: null, error: { code: "NOT_FOUND", message: "メモが見つかりません" } }
+
+  const { memo_tags, ...rest } = data as unknown as RawMemo
+  return {
+    data: {
+      ...rest,
+      tags: memo_tags
+        .filter((mt): mt is { tags: Tag } => mt.tags !== null)
+        .map(mt => mt.tags),
+    },
+    error: null,
+  }
+}
+
+const updateMemoSchema = z.object({
+  page_number: z.number().int().min(1).nullable().optional(),
+  content: z.string().min(1, "メモ内容は必須です").max(5000, "5000文字以内で入力してください"),
+  tags: z.array(
+    z.object({
+      id: z.uuid().optional(),
+      name: z.string().min(1).max(50),
+    })
+  ).optional(),
+  favorite: z.boolean(),
+})
+
+type UpdateMemoInput = {
+  page_number?: number | null
+  content?: string
+  tags?: { id?: string; name: string }[]
+  favorite?: boolean
+}
+
+export async function updateMemo(id: string, input: UpdateMemoInput): Promise<ActionResult<MemoWithTags>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
+
+  const parsed = updateMemoSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
+  const { data: memo, error: memoError } = await supabase
+    .from("reading_memos")
+    .update({
+      page_number: parsed.data.page_number,
+      content: parsed.data.content,
+      favorite: parsed.data.favorite,
+    })
+    .eq("id", id)
+    .select()
+    .single()
+
+  if (memoError) return { data: null, error: { code: "DB_ERROR", message: memoError.message } }
+
+  const tags = parsed.data.tags ?? []
+  const resolvedTagIds: string[] = []
+
+  for (const tag of tags) {
+    if (tag.id) {
+      resolvedTagIds.push(tag.id)
+    } else {
+      const { data: upserted, error: upsertError } = await supabase
+        .from("tags")
+        .upsert(
+          { user_id: user.id, name: tag.name },
+          { onConflict: "user_id,name", ignoreDuplicates: false }
+        )
+        .select("id, name")
+        .single()
+
+      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: upsertError.message } }
+      resolvedTagIds.push(upserted.id)
+    }
+  }
+
+  // 洗い替え：既存 memo_tags を削除して再 INSERT
+  const { error: deleteError } = await supabase
+    .from("memo_tags")
+    .delete()
+    .eq("memo_id", id)
+
+  if (deleteError) return { data: null, error: { code: "DB_ERROR", message: deleteError.message } }
+
+  if (resolvedTagIds.length > 0) {
+    const { error: tagError } = await supabase
+      .from("memo_tags")
+      .insert(resolvedTagIds.map(tag_id => ({ memo_id: id, tag_id })))
+
+    if (tagError) return { data: null, error: { code: "DB_ERROR", message: tagError.message } }
+  }
+
+  const { data: resolvedTags, error: tagsError } = resolvedTagIds.length > 0
+    ? await supabase.from("tags").select("id, name").in("id", resolvedTagIds)
+    : { data: [], error: null }
+
+  if (tagsError) return { data: null, error: { code: "DB_ERROR", message: tagsError.message } }
+
+  return {
+    data: { ...memo, tags: (resolvedTags ?? []) as Tag[] },
+    error: null,
+  }
+}
+
 const createMemoSchema = z.object({
   book_id: z.uuid(),
   page_number: z.number().int().min(1).nullable(),
