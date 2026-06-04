@@ -90,7 +90,7 @@ export function MemoCreateModal({ bookId, open, onOpenChange, onSuccess, tagSugg
           <DialogTitle className="text-foreground">メモを追加</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* ページ数 */}
           <div className="space-y-1.5">
             <label className="text-sm text-[#cbd5e1]" htmlFor="create-page-number">
