@@ -227,14 +227,13 @@ export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Boo
   if (booksError) return { data: null, error: booksError.message }
   if (!booksData || booksData.length === 0) return { data: [], error: null }
 
-  const bookIds = booksData.map((b) => b.id)
-
-  // favorite=true のフィルタ付きカウントが必要なため、Supabase の集計構文では対応できず別クエリで取得する。
+  // .in(bookIds) は書籍数分のUUIDをURLクエリに展開するため件数が増えると極端に低速になる。
+  // user_id で絞れば同じ結果が得られるため、そちらを使う。
   const { data: starData } = await supabase
     .from("reading_memos")
     .select("book_id")
+    .eq("user_id", user.id)
     .eq("favorite", true)
-    .in("book_id", bookIds)
 
   const starCountMap = new Map<string, number>()
   for (const row of starData ?? []) {

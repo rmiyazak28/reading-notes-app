@@ -105,7 +105,7 @@ export function TagInput({ selected, suggestions, onChange }: Props) {
       </div>
 
       {isOpen && (filtered.length > 0 || canCreate) && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border border-white/10 bg-slate-900/95 shadow-lg overflow-hidden">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border border-white/10 bg-slate-900/95 shadow-lg overflow-y-auto max-h-48">
           {filtered.map(tag => (
             <button
               key={tag.id}
