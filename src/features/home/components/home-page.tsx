@@ -122,16 +122,26 @@ export function HomePage({ initialData }: Props) {
   const handleMemoUpdated = (updated: MemoWithTags) => {
     if (!editingMemo) return
     const updatedWithBook: HomeMemoWithBook = { ...updated, book: editingMemo.book }
+    const wasAlreadyFavorite = favoriteMemos.some((m) => m.id === updatedWithBook.id)
+
     updateMemoInList(setRecentMemos, updatedWithBook.id, updatedWithBook)
+
     if (updatedWithBook.favorite) {
-      if (!favoriteMemos.some((m) => m.id === updatedWithBook.id)) {
+      if (!wasAlreadyFavorite) {
+        // お気に入りOFFから→ONに変わった
+        setFavoriteMemoCount((c) => c + 1)
         setFavoriteMemos((prev) => [updatedWithBook, ...prev].slice(0, FAVORITE_LIMIT_DISPLAY))
       } else {
         updateMemoInList(setFavoriteMemos, updatedWithBook.id, updatedWithBook)
       }
     } else {
+      if (wasAlreadyFavorite) {
+        // お気に入りONから→OFFに変わった
+        setFavoriteMemoCount((c) => Math.max(0, c - 1))
+      }
       removeMemoFromList(setFavoriteMemos, updatedWithBook.id)
     }
+
     setEditingMemo(null)
   }
 
