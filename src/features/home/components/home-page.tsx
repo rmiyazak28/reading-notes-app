@@ -67,6 +67,7 @@ export function HomePage({ initialData }: Props) {
   const [recentMemos, setRecentMemos] = useState<HomeMemoWithBook[]>(initialData.recentMemos)
   const [favoriteMemos, setFavoriteMemos] = useState<HomeMemoWithBook[]>(initialData.favoriteMemos)
   const [readingBooks, setReadingBooks] = useState<Book[]>(initialData.readingBooks)
+  const [favoriteMemoCount, setFavoriteMemoCount] = useState(initialData.summary.favoriteMemoCount)
 
   const handleBookCreated = (newBook: Book) => {
     if (newBook.status === "reading") {
@@ -95,10 +96,12 @@ export function HomePage({ initialData }: Props) {
       const newFavorite = result.data.favorite
       updateMemoInList(setRecentMemos, memo.id, { favorite: newFavorite })
       if (newFavorite) {
+        setFavoriteMemoCount((c) => c + 1)
         if (!favoriteMemos.some((m) => m.id === memo.id)) {
           setFavoriteMemos((prev) => [{ ...memo, favorite: true }, ...prev].slice(0, FAVORITE_LIMIT_DISPLAY))
         }
       } else {
+        setFavoriteMemoCount((c) => Math.max(0, c - 1))
         removeMemoFromList(setFavoriteMemos, memo.id)
       }
       updateMemoInList(setFavoriteMemos, memo.id, { favorite: newFavorite })
@@ -106,6 +109,10 @@ export function HomePage({ initialData }: Props) {
   }
 
   const handleDeleteMemo = (memoId: string) => {
+    // 削除対象がお気に入りリストに存在する場合はカウントも減らす
+    if (favoriteMemos.some((m) => m.id === memoId)) {
+      setFavoriteMemoCount((c) => Math.max(0, c - 1))
+    }
     removeMemoFromList(setRecentMemos, memoId)
     removeMemoFromList(setFavoriteMemos, memoId)
     setEditingMemo(null)
@@ -190,7 +197,7 @@ export function HomePage({ initialData }: Props) {
         )}
 
         {/* サマリーバー（PC・スマホ共通） */}
-        <HomeSummaryBar summary={initialData.summary} />
+        <HomeSummaryBar summary={{ ...initialData.summary, favoriteMemoCount }} />
 
         {/*
           PC: 上段2カラム（読書中｜最近のメモ）＋下段全幅（お気に入りメモ）
