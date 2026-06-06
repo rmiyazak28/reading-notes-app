@@ -5,6 +5,7 @@ import type { Book } from "@/features/books/types"
 import type { MemoWithTags, Tag } from "@/features/memos/types"
 
 const HOME_LIMIT = 5
+const FAVORITE_LIMIT = 10
 
 type ActionError = {
   code: "UNAUTHORIZED" | "DB_ERROR"
@@ -28,7 +29,6 @@ export type HomeSummary = {
 
 export type HomeData = {
   summary: HomeSummary
-  recentBooks: Book[]
   recentMemos: HomeMemoWithBook[]
   favoriteMemos: HomeMemoWithBook[]
   readingBooks: Book[]
@@ -63,7 +63,6 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
   const memoSelect = `*, memo_tags(tags(id, name)), books(id, title)`
 
   const [
-    recentBooksRes,
     recentMemosRes,
     favoriteMemosRes,
     readingBooksRes,
@@ -73,12 +72,6 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
     totalMemosRes,
     readingCountRes,
   ] = await Promise.all([
-    supabase
-      .from("books")
-      .select("*, memoCount:reading_memos(count)")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
-      .limit(HOME_LIMIT),
     supabase
       .from("reading_memos")
       .select(memoSelect)
@@ -91,7 +84,7 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
       .eq("user_id", user.id)
       .eq("favorite", true)
       .order("created_at", { ascending: false })
-      .limit(HOME_LIMIT),
+      .limit(FAVORITE_LIMIT),
     supabase
       .from("books")
       .select("*, memoCount:reading_memos(count)")
@@ -109,7 +102,6 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
       .select("id, name")
       .eq("user_id", user.id)
       .order("name"),
-    // サマリー用カウントクエリ
     supabase
       .from("books")
       .select("id", { count: "exact", head: true })
@@ -125,7 +117,6 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
       .eq("status", "reading"),
   ])
 
-  if (recentBooksRes.error) return { data: null, error: { code: "DB_ERROR", message: recentBooksRes.error.message } }
   if (recentMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: recentMemosRes.error.message } }
   if (favoriteMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: favoriteMemosRes.error.message } }
   if (readingBooksRes.error) return { data: null, error: { code: "DB_ERROR", message: readingBooksRes.error.message } }
@@ -151,7 +142,6 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
         totalMemos: totalMemosRes.count ?? 0,
         favoriteMemoCount: starRes.data?.length ?? 0,
       },
-      recentBooks: (recentBooksRes.data as unknown as RawBook[]).map(toBook),
       recentMemos: (recentMemosRes.data as unknown as RawMemoWithBook[]).map(toHomeMemo),
       favoriteMemos: (favoriteMemosRes.data as unknown as RawMemoWithBook[]).map(toHomeMemo),
       readingBooks: (readingBooksRes.data as unknown as RawBook[]).map(toBook),

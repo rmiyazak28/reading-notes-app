@@ -17,9 +17,11 @@ interface HomeCompactMemoRowProps {
   onEdit?: () => void
   onFavoriteClick: () => void
   isPending: boolean
+  /** PC全幅セクション（お気に入りメモ）では本文を複数行表示する */
+  multiLine?: boolean
 }
 
-export function HomeCompactMemoRow({ memo, onEdit, onFavoriteClick, isPending }: HomeCompactMemoRowProps) {
+export function HomeCompactMemoRow({ memo, onEdit, onFavoriteClick, isPending, multiLine }: HomeCompactMemoRowProps) {
   return (
     <div
       onClick={onEdit}
@@ -38,8 +40,8 @@ export function HomeCompactMemoRow({ memo, onEdit, onFavoriteClick, isPending }:
       </div>
 
       {/* メモ内容・タグ・お気に入り */}
-      <div className="flex items-center gap-2">
-        <p className="flex-1 min-w-0 text-sm text-[#f1f5f9] truncate">{memo.content}</p>
+      <div className={`flex gap-2 ${multiLine ? "items-start" : "items-center"}`}>
+        <p className={`flex-1 min-w-0 text-sm text-[#f1f5f9] ${multiLine ? "line-clamp-3" : "truncate"}`}>{memo.content}</p>
 
         {/* タグ（最大2件） */}
         <div className="shrink-0 flex items-center gap-1">

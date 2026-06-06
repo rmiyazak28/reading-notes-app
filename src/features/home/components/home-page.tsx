@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, ChevronRight, Clock, BookMarked, BookOpen, Star } from "lucide-react"
+import { Plus, ChevronRight, BookMarked, BookOpen, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookRegisterModal } from "@/features/books/components/book-register-modal"
 import { MemoEditModal } from "@/features/memos/components/memo-edit-modal"
@@ -23,62 +23,36 @@ type Props = {
   initialData: HomeData
 }
 
-interface SectionProps {
+interface SectionHeaderProps {
   title: string
   icon: React.ReactNode
   linkHref: string
   linkLabel: string
-  emptyMessage: string
-  hasItems: boolean
-  // PC: コンパクトリスト / スマホ: 横スクロールカード
-  compactRows: React.ReactNode
-  scrollCards: React.ReactNode
-  isMobile: boolean
 }
 
-function HomeSection({
-  title,
-  icon,
-  linkHref,
-  linkLabel,
-  emptyMessage,
-  hasItems,
-  compactRows,
-  scrollCards,
-  isMobile,
-}: SectionProps) {
+function SectionHeader({ title, icon, linkHref, linkLabel }: SectionHeaderProps) {
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-[#f1f5f9]">
-          {icon}
-          {title}
-        </h2>
-        <Link
-          href={linkHref}
-          className="flex items-center gap-0.5 text-xs text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
-        >
-          {linkLabel}
-          <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
+    <div className="flex items-center justify-between">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-[#f1f5f9]">
+        {icon}
+        {title}
+      </h2>
+      <Link
+        href={linkHref}
+        className="flex items-center gap-0.5 text-xs text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
+      >
+        {linkLabel}
+        <ChevronRight className="h-3 w-3" />
+      </Link>
+    </div>
+  )
+}
 
-      {!hasItems ? (
-        <div className="glass rounded-lg p-5 text-center text-[#94a3b8] text-xs">
-          {emptyMessage}
-        </div>
-      ) : isMobile ? (
-        // スマホ：横スクロールカード列
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          {scrollCards}
-        </div>
-      ) : (
-        // PC：コンパクトリスト
-        <div className="glass rounded-lg overflow-hidden divide-y divide-white/10">
-          {compactRows}
-        </div>
-      )}
-    </section>
+function EmptyCard({ message }: { message: string }) {
+  return (
+    <div className="glass rounded-lg p-5 text-center text-[#94a3b8] text-xs">
+      {message}
+    </div>
   )
 }
 
@@ -90,13 +64,11 @@ export function HomePage({ initialData }: Props) {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
   const [editingMemo, setEditingMemo] = useState<HomeMemoWithBook | null>(null)
 
-  const [recentBooks, setRecentBooks] = useState<Book[]>(initialData.recentBooks)
   const [recentMemos, setRecentMemos] = useState<HomeMemoWithBook[]>(initialData.recentMemos)
   const [favoriteMemos, setFavoriteMemos] = useState<HomeMemoWithBook[]>(initialData.favoriteMemos)
   const [readingBooks, setReadingBooks] = useState<Book[]>(initialData.readingBooks)
 
   const handleBookCreated = (newBook: Book) => {
-    setRecentBooks((prev) => [newBook, ...prev].slice(0, HOME_LIMIT_DISPLAY))
     if (newBook.status === "reading") {
       setReadingBooks((prev) => [newBook, ...prev].slice(0, HOME_LIMIT_DISPLAY))
     }
@@ -124,7 +96,7 @@ export function HomePage({ initialData }: Props) {
       updateMemoInList(setRecentMemos, memo.id, { favorite: newFavorite })
       if (newFavorite) {
         if (!favoriteMemos.some((m) => m.id === memo.id)) {
-          setFavoriteMemos((prev) => [{ ...memo, favorite: true }, ...prev].slice(0, HOME_LIMIT_DISPLAY))
+          setFavoriteMemos((prev) => [{ ...memo, favorite: true }, ...prev].slice(0, FAVORITE_LIMIT_DISPLAY))
         }
       } else {
         removeMemoFromList(setFavoriteMemos, memo.id)
@@ -146,7 +118,7 @@ export function HomePage({ initialData }: Props) {
     updateMemoInList(setRecentMemos, updatedWithBook.id, updatedWithBook)
     if (updatedWithBook.favorite) {
       if (!favoriteMemos.some((m) => m.id === updatedWithBook.id)) {
-        setFavoriteMemos((prev) => [updatedWithBook, ...prev].slice(0, HOME_LIMIT_DISPLAY))
+        setFavoriteMemos((prev) => [updatedWithBook, ...prev].slice(0, FAVORITE_LIMIT_DISPLAY))
       } else {
         updateMemoInList(setFavoriteMemos, updatedWithBook.id, updatedWithBook)
       }
@@ -163,6 +135,43 @@ export function HomePage({ initialData }: Props) {
       setEditingMemo(memo)
     }
   }
+
+  // --- PC用コンパクトリスト ---
+  const compactBookRows = (books: Book[]) =>
+    books.map((b) => <HomeCompactBookRow key={b.id} book={b} />)
+
+  const compactMemoRows = (memos: HomeMemoWithBook[], multiLine?: boolean) =>
+    memos.map((m) => (
+      <HomeCompactMemoRow
+        key={m.id}
+        memo={m}
+        onEdit={() => handleMemoCardClick(m)}
+        onFavoriteClick={() => handleToggleFavorite(m)}
+        isPending={isPending}
+        multiLine={multiLine}
+      />
+    ))
+
+  // --- スマホ用横スクロールカード ---
+  const scrollBookCards = (books: Book[]) => (
+    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+      {books.map((b) => <HomeBookCard key={b.id} book={b} />)}
+    </div>
+  )
+
+  const scrollMemoCards = (memos: HomeMemoWithBook[]) => (
+    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+      {memos.map((m) => (
+        <HomeMemoCard
+          key={m.id}
+          memo={m}
+          onEdit={() => handleMemoCardClick(m)}
+          onFavoriteClick={() => handleToggleFavorite(m)}
+          isPending={isPending}
+        />
+      ))}
+    </div>
+  )
 
   return (
     <div className="min-h-screen">
@@ -183,99 +192,71 @@ export function HomePage({ initialData }: Props) {
         {/* サマリーバー（PC・スマホ共通） */}
         <HomeSummaryBar summary={initialData.summary} />
 
-        {/* 2カラムグリッド（PC） / 1カラム縦積み（スマホ） */}
+        {/*
+          PC: 上段2カラム（読書中｜最近のメモ）＋下段全幅（お気に入りメモ）
+          スマホ: 縦積み1カラム（最近のメモ→お気に入りメモ→読書中）
+          order クラスでモバイル順序と PC グリッド配置を両立する
+        */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <HomeSection
-            title="最近読んだ本"
-            icon={<Clock className="h-3.5 w-3.5 text-[#94a3b8]" />}
-            linkHref="/books"
-            linkLabel="一覧を見る"
-            emptyMessage="書籍がまだ登録されていません"
-            hasItems={recentBooks.length > 0}
-            isMobile={isMobile}
-            compactRows={recentBooks.map((b) => <HomeCompactBookRow key={b.id} book={b} />)}
-            scrollCards={
-              <>{recentBooks.map((b) => <HomeBookCard key={b.id} book={b} />)}</>
-            }
-          />
 
-          <HomeSection
-            title="読書中"
-            icon={<BookMarked className="h-3.5 w-3.5 text-[#94a3b8]" />}
-            linkHref="/books?status=reading"
-            linkLabel="一覧を見る"
-            emptyMessage="読書中の書籍はありません"
-            hasItems={readingBooks.length > 0}
-            isMobile={isMobile}
-            compactRows={readingBooks.map((b) => <HomeCompactBookRow key={b.id} book={b} />)}
-            scrollCards={
-              <>{readingBooks.map((b) => <HomeBookCard key={b.id} book={b} />)}</>
-            }
-          />
+          {/* 読書中: スマホ=3番目 / PC=左上 */}
+          <section className="order-3 md:order-1 flex flex-col gap-3">
+            <SectionHeader
+              title="読書中"
+              icon={<BookMarked className="h-3.5 w-3.5 text-[#94a3b8]" />}
+              linkHref="/books?status=reading"
+              linkLabel="一覧を見る"
+            />
+            {readingBooks.length === 0 ? (
+              <EmptyCard message="読書中の書籍はありません" />
+            ) : isMobile ? (
+              scrollBookCards(readingBooks)
+            ) : (
+              <div className="glass rounded-lg overflow-hidden divide-y divide-white/10">
+                {compactBookRows(readingBooks)}
+              </div>
+            )}
+          </section>
 
-          <HomeSection
-            title="最近のメモ"
-            icon={<BookOpen className="h-3.5 w-3.5 text-[#94a3b8]" />}
-            linkHref="/memos"
-            linkLabel="全メモ検索"
-            emptyMessage="メモがまだ登録されていません"
-            hasItems={recentMemos.length > 0}
-            isMobile={isMobile}
-            compactRows={recentMemos.map((m) => (
-              <HomeCompactMemoRow
-                key={m.id}
-                memo={m}
-                onEdit={() => handleMemoCardClick(m)}
-                onFavoriteClick={() => handleToggleFavorite(m)}
-                isPending={isPending}
-              />
-            ))}
-            scrollCards={
-              <>
-                {recentMemos.map((m) => (
-                  <HomeMemoCard
-                    key={m.id}
-                    memo={m}
-                    onEdit={() => handleMemoCardClick(m)}
-                    onFavoriteClick={() => handleToggleFavorite(m)}
-                    isPending={isPending}
-                  />
-                ))}
-              </>
-            }
-          />
+          {/* 最近のメモ: スマホ=1番目 / PC=右上 */}
+          <section className="order-1 md:order-2 flex flex-col gap-3">
+            <SectionHeader
+              title="最近のメモ"
+              icon={<BookOpen className="h-3.5 w-3.5 text-[#94a3b8]" />}
+              linkHref="/memos"
+              linkLabel="全メモ検索"
+            />
+            {recentMemos.length === 0 ? (
+              <EmptyCard message="メモがまだ登録されていません" />
+            ) : isMobile ? (
+              scrollMemoCards(recentMemos)
+            ) : (
+              <div className="glass rounded-lg overflow-hidden divide-y divide-white/10">
+                {compactMemoRows(recentMemos)}
+              </div>
+            )}
+          </section>
 
-          <HomeSection
-            title="お気に入りメモ"
-            icon={<Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />}
-            linkHref="/favorites"
-            linkLabel="一覧を見る"
-            emptyMessage="お気に入りメモはまだありません"
-            hasItems={favoriteMemos.length > 0}
-            isMobile={isMobile}
-            compactRows={favoriteMemos.map((m) => (
-              <HomeCompactMemoRow
-                key={m.id}
-                memo={m}
-                onEdit={() => handleMemoCardClick(m)}
-                onFavoriteClick={() => handleToggleFavorite(m)}
-                isPending={isPending}
-              />
-            ))}
-            scrollCards={
-              <>
-                {favoriteMemos.map((m) => (
-                  <HomeMemoCard
-                    key={m.id}
-                    memo={m}
-                    onEdit={() => handleMemoCardClick(m)}
-                    onFavoriteClick={() => handleToggleFavorite(m)}
-                    isPending={isPending}
-                  />
-                ))}
-              </>
-            }
-          />
+          {/* お気に入りメモ: スマホ=2番目 / PC=下段全幅 */}
+          <section className="order-2 md:order-3 md:col-span-2 flex flex-col gap-3">
+            <SectionHeader
+              title="お気に入りメモ"
+              icon={<Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />}
+              linkHref="/favorites"
+              linkLabel="一覧を見る"
+            />
+            {favoriteMemos.length === 0 ? (
+              <EmptyCard message="お気に入りメモはまだありません" />
+            ) : isMobile ? (
+              scrollMemoCards(favoriteMemos)
+            ) : (
+              <div className="glass rounded-lg overflow-hidden divide-y divide-white/10">
+                {/* PC全幅では本文を2〜3行表示 */}
+                {compactMemoRows(favoriteMemos, true)}
+              </div>
+            )}
+          </section>
+
         </div>
       </main>
 
@@ -311,5 +292,5 @@ export function HomePage({ initialData }: Props) {
   )
 }
 
-// home-page 内でのみ使用する表示件数の上限定数
 const HOME_LIMIT_DISPLAY = 5
+const FAVORITE_LIMIT_DISPLAY = 10
