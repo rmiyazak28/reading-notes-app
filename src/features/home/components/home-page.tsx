@@ -141,7 +141,8 @@ export function HomePage({ initialData }: Props) {
 
   // MemoEditModal は MemoWithTags を返すため、編集前の book 情報を補完して HomeMemoWithBook に変換する
   const handleMemoUpdated = (updated: MemoWithTags) => {
-    const updatedWithBook: HomeMemoWithBook = { ...updated, book: editingMemo!.book }
+    if (!editingMemo) return
+    const updatedWithBook: HomeMemoWithBook = { ...updated, book: editingMemo.book }
     updateMemoInList(setRecentMemos, updatedWithBook.id, updatedWithBook)
     if (updatedWithBook.favorite) {
       if (!favoriteMemos.some((m) => m.id === updatedWithBook.id)) {
