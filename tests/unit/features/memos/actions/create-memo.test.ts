@@ -66,7 +66,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "メモ",
-        tag_ids: [],
         favorite: false,
       })
 
@@ -85,7 +84,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "",
-        tag_ids: [],
         favorite: false,
       })
 
@@ -99,7 +97,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "a".repeat(5001),
-        tag_ids: [],
         favorite: false,
       })
 
@@ -113,7 +110,6 @@ describe("createMemo", () => {
         book_id: "not-a-uuid",
         page_number: null,
         content: "メモ内容",
-        tag_ids: [],
         favorite: false,
       })
 
@@ -126,7 +122,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: 0,
         content: "メモ内容",
-        tag_ids: [],
         favorite: false,
       })
 
@@ -148,7 +143,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: 42,
         content: "テストメモ",
-        tag_ids: [],
         favorite: false,
       })
 
@@ -171,7 +165,7 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "テストメモ",
-        tag_ids: [TAG_ID],
+        tags: [{ id: TAG_ID, name: "DDD" }],
         favorite: false,
       })
 
@@ -189,7 +183,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "お気に入りメモ",
-        tag_ids: [],
         favorite: true,
       })
 
@@ -205,7 +198,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "ページなしメモ",
-        tag_ids: [],
         favorite: false,
       })
 
@@ -226,7 +218,6 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "メモ",
-        tag_ids: [],
         favorite: false,
       })
 
@@ -242,7 +233,7 @@ describe("createMemo", () => {
         book_id: BOOK_ID,
         page_number: null,
         content: "メモ",
-        tag_ids: [TAG_ID],
+        tags: [{ id: TAG_ID, name: "DDD" }],
         favorite: false,
       })
 
