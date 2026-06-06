@@ -48,10 +48,9 @@ type ActionError = {
 
 | セクション | 使用Action | パラメータ |
 |---|---|---|
-| 最近読んだ本 | `getBooks` | `limit: 5`（目安）, `status`未指定 |
 | 読書中書籍 | `getBooks` | `status: "reading"`, `limit: 5` |
 | 最近のメモ | `getMemos` | `limit: 5` |
-| お気に入りメモ | `getMemos` | `favoriteOnly: true`, `limit: 5` |
+| お気に入りメモ | `getMemos` | `favoriteOnly: true`, `limit: 10` |
 
 > limitの具体的な件数はUI実装時に決定する。
 
