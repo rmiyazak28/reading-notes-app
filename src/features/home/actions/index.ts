@@ -15,10 +15,22 @@ type ActionResult<T> =
   | { data: T; error: null }
   | { data: null; error: ActionError }
 
+export type HomeMemoWithBook = MemoWithTags & {
+  book: { id: string; title: string }
+}
+
+export type HomeSummary = {
+  totalBooks: number
+  readingBookCount: number
+  totalMemos: number
+  favoriteMemoCount: number
+}
+
 export type HomeData = {
+  summary: HomeSummary
   recentBooks: Book[]
-  recentMemos: MemoWithTags[]
-  favoriteMemos: MemoWithTags[]
+  recentMemos: HomeMemoWithBook[]
+  favoriteMemos: HomeMemoWithBook[]
   readingBooks: Book[]
   tags: Tag[]
 }
@@ -27,17 +39,19 @@ type RawBook = Omit<Book, "memoCount" | "starCount"> & {
   memoCount: { count: number }[]
 }
 
-type RawMemo = Omit<MemoWithTags, "tags"> & {
+type RawMemoWithBook = Omit<HomeMemoWithBook, "tags" | "book"> & {
   memo_tags: { tags: { id: string; name: string } | null }[]
+  books: { id: string; title: string }
 }
 
-function toMemoWithTags(raw: RawMemo): MemoWithTags {
-  const { memo_tags, ...rest } = raw
+function toHomeMemo(raw: RawMemoWithBook): HomeMemoWithBook {
+  const { memo_tags, books, ...rest } = raw
   return {
     ...rest,
     tags: memo_tags
       .filter((mt): mt is { tags: Tag } => mt.tags !== null)
       .map((mt) => mt.tags),
+    book: books,
   }
 }
 
@@ -46,47 +60,70 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
 
-  const memoSelect = `*, memo_tags(tags(id, name))`
+  const memoSelect = `*, memo_tags(tags(id, name)), books(id, title)`
 
-  const [recentBooksRes, recentMemosRes, favoriteMemosRes, readingBooksRes, starRes, tagsRes] =
-    await Promise.all([
-      supabase
-        .from("books")
-        .select("*, memoCount:reading_memos(count)")
-        .eq("user_id", user.id)
-        .order("updated_at", { ascending: false })
-        .limit(HOME_LIMIT),
-      supabase
-        .from("reading_memos")
-        .select(memoSelect)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(HOME_LIMIT),
-      supabase
-        .from("reading_memos")
-        .select(memoSelect)
-        .eq("user_id", user.id)
-        .eq("favorite", true)
-        .order("created_at", { ascending: false })
-        .limit(HOME_LIMIT),
-      supabase
-        .from("books")
-        .select("*, memoCount:reading_memos(count)")
-        .eq("user_id", user.id)
-        .eq("status", "reading")
-        .order("updated_at", { ascending: false })
-        .limit(HOME_LIMIT),
-      supabase
-        .from("reading_memos")
-        .select("book_id")
-        .eq("user_id", user.id)
-        .eq("favorite", true),
-      supabase
-        .from("tags")
-        .select("id, name")
-        .eq("user_id", user.id)
-        .order("name"),
-    ])
+  const [
+    recentBooksRes,
+    recentMemosRes,
+    favoriteMemosRes,
+    readingBooksRes,
+    starRes,
+    tagsRes,
+    totalBooksRes,
+    totalMemosRes,
+    readingCountRes,
+  ] = await Promise.all([
+    supabase
+      .from("books")
+      .select("*, memoCount:reading_memos(count)")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(HOME_LIMIT),
+    supabase
+      .from("reading_memos")
+      .select(memoSelect)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(HOME_LIMIT),
+    supabase
+      .from("reading_memos")
+      .select(memoSelect)
+      .eq("user_id", user.id)
+      .eq("favorite", true)
+      .order("created_at", { ascending: false })
+      .limit(HOME_LIMIT),
+    supabase
+      .from("books")
+      .select("*, memoCount:reading_memos(count)")
+      .eq("user_id", user.id)
+      .eq("status", "reading")
+      .order("updated_at", { ascending: false })
+      .limit(HOME_LIMIT),
+    supabase
+      .from("reading_memos")
+      .select("book_id")
+      .eq("user_id", user.id)
+      .eq("favorite", true),
+    supabase
+      .from("tags")
+      .select("id, name")
+      .eq("user_id", user.id)
+      .order("name"),
+    // サマリー用カウントクエリ
+    supabase
+      .from("books")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("reading_memos")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("books")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "reading"),
+  ])
 
   if (recentBooksRes.error) return { data: null, error: { code: "DB_ERROR", message: recentBooksRes.error.message } }
   if (recentMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: recentMemosRes.error.message } }
@@ -108,9 +145,15 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
 
   return {
     data: {
+      summary: {
+        totalBooks: totalBooksRes.count ?? 0,
+        readingBookCount: readingCountRes.count ?? 0,
+        totalMemos: totalMemosRes.count ?? 0,
+        favoriteMemoCount: starRes.data?.length ?? 0,
+      },
       recentBooks: (recentBooksRes.data as unknown as RawBook[]).map(toBook),
-      recentMemos: (recentMemosRes.data as unknown as RawMemo[]).map(toMemoWithTags),
-      favoriteMemos: (favoriteMemosRes.data as unknown as RawMemo[]).map(toMemoWithTags),
+      recentMemos: (recentMemosRes.data as unknown as RawMemoWithBook[]).map(toHomeMemo),
+      favoriteMemos: (favoriteMemosRes.data as unknown as RawMemoWithBook[]).map(toHomeMemo),
       readingBooks: (readingBooksRes.data as unknown as RawBook[]).map(toBook),
       tags: (tagsRes.data ?? []) as Tag[],
     },
