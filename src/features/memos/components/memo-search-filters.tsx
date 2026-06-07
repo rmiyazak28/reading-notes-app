@@ -29,55 +29,64 @@ export function MemoSearchFilters({
   onSortByChange,
   totalCount,
 }: MemoSearchFiltersProps) {
+  const countBadge = (
+    <span className="text-sm shrink-0">
+      <span className="text-[#22d3ee] font-medium">{totalCount}</span>
+      <span className="text-[#cbd5e1]"> 件</span>
+    </span>
+  )
+
   return (
-    <div className="sticky top-16 z-40 pb-4 -mx-4 px-4 bg-transparent backdrop-blur-md">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="w-full sm:max-w-sm">
-          <SearchBar
-            value={query}
-            onChange={onQueryChange}
-            placeholder="メモ内容・書籍名・著者・タグで検索..."
-          />
-        </div>
+    <>
+      {/* stickyエリア：ヘッダー(h-16=64px)直下に吸着。PCは件数もここに含める */}
+      <div className="sticky top-16 z-40 pt-4 pb-3 -mx-4 px-4 bg-transparent backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="w-full sm:max-w-sm">
+            <SearchBar
+              value={query}
+              onChange={onQueryChange}
+              placeholder="メモ内容・書籍名・著者・タグで検索..."
+            />
+          </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {/* お気に入りフィルタ */}
-          <button
-            onClick={() => onFavoriteOnlyChange(!favoriteOnly)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-              favoriteOnly
-                ? "bg-amber-400/20 border-amber-400/40 text-amber-300"
-                : "glass border-white/10 text-[#94a3b8] hover:text-[#f1f5f9] hover:border-white/20"
-            }`}
-            aria-pressed={favoriteOnly}
-          >
-            <Star className={`h-3.5 w-3.5 ${favoriteOnly ? "fill-amber-400 text-amber-400" : ""}`} />
-            お気に入りのみ
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* お気に入りフィルタ */}
+            <button
+              onClick={() => onFavoriteOnlyChange(!favoriteOnly)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                favoriteOnly
+                  ? "bg-amber-400/20 border-amber-400/40 text-amber-300"
+                  : "glass border-white/10 text-[#94a3b8] hover:text-[#f1f5f9] hover:border-white/20"
+              }`}
+              aria-pressed={favoriteOnly}
+            >
+              <Star className={`h-3.5 w-3.5 ${favoriteOnly ? "fill-amber-400 text-amber-400" : ""}`} />
+              お気に入りのみ
+            </button>
 
-          {/* ソート */}
-          <Select value={sortBy} onValueChange={(v) => onSortByChange(v as "created_at" | "updated_at")}>
-            <SelectTrigger className="w-fit glass border-white/10 bg-white/5 text-[#94a3b8] text-xs h-8 gap-1.5">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="glass bg-slate-900/95 border-white/10">
-              <SelectItem value="created_at" className="text-foreground focus:bg-white/10 text-xs">
-                登録日順
-              </SelectItem>
-              <SelectItem value="updated_at" className="text-foreground focus:bg-white/10 text-xs">
-                更新日順
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            {/* ソート */}
+            <Select value={sortBy} onValueChange={(v) => onSortByChange(v as "created_at" | "updated_at")}>
+              <SelectTrigger className="w-fit glass border-white/10 bg-white/5 text-[#94a3b8] text-xs h-8 gap-1.5">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="glass bg-slate-900/95 border-white/10">
+                <SelectItem value="created_at" className="text-foreground focus:bg-white/10 text-xs">
+                  登録日順
+                </SelectItem>
+                <SelectItem value="updated_at" className="text-foreground focus:bg-white/10 text-xs">
+                  更新日順
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* PC のみ sticky エリア内に件数表示（ソートの直後に配置） */}
+          <div className="hidden sm:block">{countBadge}</div>
         </div>
       </div>
 
-      <div className="mt-2">
-        <span className="text-sm">
-          <span className="text-[#22d3ee] font-medium">{totalCount}</span>
-          <span className="text-[#cbd5e1]"> 件</span>
-        </span>
-      </div>
-    </div>
+      {/* スマホのみ sticky エリア外（スクロールで流れる） */}
+      <div className="sm:hidden mt-1">{countBadge}</div>
+    </>
   )
 }
