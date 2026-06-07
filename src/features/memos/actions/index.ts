@@ -60,15 +60,9 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
     builder = builder.eq("favorite", true)
   }
 
-  if (query && query.trim()) {
-    // メモ内容・タグ名・書籍名・著者名を横断的に部分一致検索する。
-    // Supabase の OR フィルタは単一テーブルのカラムにしか使えないため、
-    // 関連テーブル（books, tags）のカラムはサブクエリ的な OR 句として記述している。
-    builder = builder.or(
-      `content.ilike.%${query}%,books.title.ilike.%${query}%,books.author.ilike.%${query}%`
-    )
-  }
-
+  // PostgREST の or() は結合テーブルのカラムを直接指定できないため、
+  // 書籍名・著者名・タグ名を含む横断検索はクライアント側フィルタで行う。
+  // query がある場合はクライアントフィルタで絞るため、サーバー側では全件取得する。
   const { data, error } = await builder.range(offset, offset + limit - 1)
 
   if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }

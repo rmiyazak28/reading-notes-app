@@ -126,15 +126,15 @@ describe("searchMemos", () => {
       expect(builder["eq"]).not.toHaveBeenCalled()
     })
 
-    it("query がある場合 or() が呼ばれる", async () => {
+    it("query があっても or() は呼ばれない（クライアント側フィルタで処理）", async () => {
       mockRange.mockResolvedValue({ data: [], error: null })
 
       await searchMemos({ query: "テスト" })
 
-      expect(builder["or"]).toHaveBeenCalled()
+      expect(builder["or"]).not.toHaveBeenCalled()
     })
 
-    it("query が空文字の場合 or() は呼ばれない", async () => {
+    it("query が空文字の場合も or() は呼ばれない", async () => {
       mockRange.mockResolvedValue({ data: [], error: null })
 
       await searchMemos({ query: "" })
