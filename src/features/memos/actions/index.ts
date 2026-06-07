@@ -1,6 +1,7 @@
 "use server"
 
 import { z } from "zod"
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import type { MemoWithTags, MemoWithBook, Tag } from "@/features/memos/types"
 
@@ -166,6 +167,7 @@ export async function deleteMemo(id: string): Promise<ActionResult<void>> {
 
   if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
 
+  revalidatePath("/memos")
   return { data: undefined, error: null }
 }
 

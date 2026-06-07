@@ -91,7 +91,6 @@ export function MemoEditPage({ memo, book, tagSuggestions }: Props) {
         return
       }
       toast({ title: "メモを削除しました" })
-      router.refresh()
       router.back()
     })
   }
