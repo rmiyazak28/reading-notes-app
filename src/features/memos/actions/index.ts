@@ -302,6 +302,7 @@ export async function updateMemo(id: string, input: UpdateMemoInput): Promise<Ac
 
   if (tagsError) return { data: null, error: { code: "DB_ERROR", message: tagsError.message } }
 
+  revalidatePath("/memos")
   return {
     data: { ...memo, tags: (resolvedTags ?? []) as Tag[] },
     error: null,

@@ -125,7 +125,7 @@ export function BookDetailPage({ initialBook, initialMemos, initialTags, userNam
 
   const handleEditMemo = (memo: MemoWithTags) => {
     if (isMobile) {
-      router.push(`/memos/${memo.id}/edit`)
+      router.push(`/memos/${memo.id}/edit?from=books/${book.id}`)
     } else {
       setEditingMemo(memo)
     }

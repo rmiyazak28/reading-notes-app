@@ -25,7 +25,7 @@ function MemoSearchCard({ memo, togglingIds, sortBy, onToggleFavorite }: MemoSea
   return (
     <div
       className="glass rounded-lg p-4 cursor-pointer glass-hover"
-      onClick={() => router.push(`/memos/${memo.id}/edit`)}
+      onClick={() => router.push(`/memos/${memo.id}/edit?from=memos`)}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs text-[#94a3b8] truncate flex-1">{memo.book_title}</p>

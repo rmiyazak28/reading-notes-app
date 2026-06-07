@@ -42,9 +42,10 @@ type Props = {
   memo: MemoWithTags
   book: Book
   tagSuggestions: Tag[]
+  backTo: string
 }
 
-export function MemoEditPage({ memo, book, tagSuggestions }: Props) {
+export function MemoEditPage({ memo, book, tagSuggestions, backTo }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
@@ -77,8 +78,7 @@ export function MemoEditPage({ memo, book, tagSuggestions }: Props) {
       }
 
       toast({ title: "メモを更新しました" })
-      router.refresh()
-      router.back()
+      router.replace(backTo)
     })
   }
 
@@ -91,7 +91,7 @@ export function MemoEditPage({ memo, book, tagSuggestions }: Props) {
         return
       }
       toast({ title: "メモを削除しました" })
-      router.back()
+      router.replace(backTo)
     })
   }
 
