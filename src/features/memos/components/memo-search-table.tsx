@@ -13,7 +13,7 @@ import type { MemoWithBook } from "@/features/memos/types"
 
 interface MemoSearchTableProps {
   memos: MemoWithBook[]
-  isPending: boolean
+  togglingIds: Set<string>
   onEdit: (memo: MemoWithBook) => void
   onToggleFavorite: (memo: MemoWithBook) => void
 }
@@ -26,7 +26,7 @@ function formatDate(dateStr: string): string {
   })
 }
 
-export function MemoSearchTable({ memos, isPending, onEdit, onToggleFavorite }: MemoSearchTableProps) {
+export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }: MemoSearchTableProps) {
   if (memos.length === 0) {
     return (
       <div className="glass rounded-lg p-8 text-center text-[#94a3b8]">
@@ -82,7 +82,7 @@ export function MemoSearchTable({ memos, isPending, onEdit, onToggleFavorite }: 
               <TableCell>
                 <button
                   onClick={(e) => { e.stopPropagation(); onToggleFavorite(memo) }}
-                  disabled={isPending}
+                  disabled={togglingIds.has(memo.id)}
                   className="transition-colors"
                   aria-label={memo.favorite ? "お気に入り解除" : "お気に入りに追加"}
                 >

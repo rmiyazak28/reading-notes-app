@@ -44,8 +44,9 @@ export function MemoSearchPage({
   const [editingMemo, setEditingMemo] = useState<MemoWithBook | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isLoadingMore, startLoadMoreTransition] = useTransition()
-  // 検索 transition と分離することで、星ボタンが検索フェッチの isPending に引きずられないようにする
-  const [isFavoriteToggling, startFavoriteTransition] = useTransition()
+  // useTransition を使うと Concurrent Mode の再レンダーで pending が解除されないケースがあるため、
+  // メモ単位の Set でトグル中を管理する
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set())
 
   // 検索条件変更をURLに反映する（debounce 付き）
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -116,18 +117,21 @@ export function MemoSearchPage({
     })
   }
 
-  const handleToggleFavorite = (memo: MemoWithBook) => {
-    startFavoriteTransition(async () => {
+  const handleToggleFavorite = async (memo: MemoWithBook) => {
+    if (togglingIds.has(memo.id)) return
+    setTogglingIds(prev => new Set(prev).add(memo.id))
+    try {
       const result = await toggleFavorite(memo.id)
       if (result.error) {
         toast({ title: "エラー", description: result.error.message, variant: "destructive" })
         return
       }
-      const newFavorite = result.data.favorite
       setMemos(prev =>
-        prev.map(m => m.id === memo.id ? { ...m, favorite: newFavorite } : m)
+        prev.map(m => m.id === memo.id ? { ...m, favorite: result.data.favorite } : m)
       )
-    })
+    } finally {
+      setTogglingIds(prev => { const next = new Set(prev); next.delete(memo.id); return next })
+    }
   }
 
   const handleMemoUpdated = (updated: MemoWithBook) => {
@@ -162,14 +166,14 @@ export function MemoSearchPage({
           {isMobile ? (
             <MemoSearchCardList
               memos={memos}
-              isPending={isFavoriteToggling}
+              togglingIds={togglingIds}
               sortBy={sortBy}
               onToggleFavorite={handleToggleFavorite}
             />
           ) : (
             <MemoSearchTable
               memos={memos}
-              isPending={isFavoriteToggling}
+              togglingIds={togglingIds}
               onEdit={setEditingMemo}
               onToggleFavorite={handleToggleFavorite}
             />
