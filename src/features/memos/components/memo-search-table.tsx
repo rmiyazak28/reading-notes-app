@@ -45,7 +45,7 @@ export function MemoSearchTable({ memos, isPending, onEdit, onToggleFavorite }: 
             <TableHead className="text-[#94a3b8] bg-white/5 w-[40%]">メモ内容</TableHead>
             <TableHead className="text-[#94a3b8] bg-white/5 w-[18%]">タグ</TableHead>
             <TableHead className="text-[#94a3b8] bg-white/5 w-[6%]">★</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[10%]">更新日</TableHead>
+            <TableHead className="text-[#94a3b8] bg-white/5 w-[10%]">登録日 / 更新日</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -91,8 +91,9 @@ export function MemoSearchTable({ memos, isPending, onEdit, onToggleFavorite }: 
                   />
                 </button>
               </TableCell>
-              <TableCell className="text-[#cbd5e1] text-sm">
-                {formatDate(memo.updated_at)}
+              <TableCell>
+                <p className="text-[#cbd5e1] text-xs">登録: {formatDate(memo.created_at)}</p>
+                <p className="text-[#94a3b8] text-xs mt-0.5">更新: {formatDate(memo.updated_at)}</p>
               </TableCell>
             </TableRow>
           ))}

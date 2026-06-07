@@ -7,6 +7,7 @@ import type { MemoWithBook } from "@/features/memos/types"
 interface MemoSearchCardProps {
   memo: MemoWithBook
   isPending: boolean
+  sortBy: "created_at" | "updated_at"
   onToggleFavorite: (memo: MemoWithBook) => void
 }
 
@@ -18,7 +19,7 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function MemoSearchCard({ memo, isPending, onToggleFavorite }: MemoSearchCardProps) {
+function MemoSearchCard({ memo, isPending, sortBy, onToggleFavorite }: MemoSearchCardProps) {
   const router = useRouter()
 
   return (
@@ -52,7 +53,9 @@ function MemoSearchCard({ memo, isPending, onToggleFavorite }: MemoSearchCardPro
         </div>
       )}
 
-      <p className="text-xs text-[#64748b] mt-3">{formatDate(memo.updated_at)}</p>
+      <p className="text-xs text-[#64748b] mt-3">
+        {sortBy === "created_at" ? `登録: ${formatDate(memo.created_at)}` : `更新: ${formatDate(memo.updated_at)}`}
+      </p>
     </div>
   )
 }
@@ -60,10 +63,11 @@ function MemoSearchCard({ memo, isPending, onToggleFavorite }: MemoSearchCardPro
 interface MemoSearchCardListProps {
   memos: MemoWithBook[]
   isPending: boolean
+  sortBy: "created_at" | "updated_at"
   onToggleFavorite: (memo: MemoWithBook) => void
 }
 
-export function MemoSearchCardList({ memos, isPending, onToggleFavorite }: MemoSearchCardListProps) {
+export function MemoSearchCardList({ memos, isPending, sortBy, onToggleFavorite }: MemoSearchCardListProps) {
   if (memos.length === 0) {
     return (
       <div className="glass rounded-lg p-8 text-center text-[#94a3b8]">
@@ -79,6 +83,7 @@ export function MemoSearchCardList({ memos, isPending, onToggleFavorite }: MemoS
           key={memo.id}
           memo={memo}
           isPending={isPending}
+          sortBy={sortBy}
           onToggleFavorite={onToggleFavorite}
         />
       ))}

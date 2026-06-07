@@ -161,6 +161,7 @@ export function MemoSearchPage({
             <MemoSearchCardList
               memos={memos}
               isPending={isPending}
+              sortBy={sortBy}
               onToggleFavorite={handleToggleFavorite}
             />
           ) : (
