@@ -126,9 +126,13 @@ export function MemoSearchPage({
         toast({ title: "エラー", description: result.error.message, variant: "destructive" })
         return
       }
-      setMemos(prev =>
-        prev.map(m => m.id === memo.id ? { ...m, favorite: result.data.favorite } : m)
-      )
+      const newFavorite = result.data.favorite
+      // お気に入りのみ表示中に解除した場合は一覧から除去する
+      if (favoriteOnly && !newFavorite) {
+        setMemos(prev => prev.filter(m => m.id !== memo.id))
+      } else {
+        setMemos(prev => prev.map(m => m.id === memo.id ? { ...m, favorite: newFavorite } : m))
+      }
     } finally {
       setTogglingIds(prev => { const next = new Set(prev); next.delete(memo.id); return next })
     }
