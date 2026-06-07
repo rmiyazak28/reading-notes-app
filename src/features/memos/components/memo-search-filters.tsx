@@ -29,16 +29,9 @@ export function MemoSearchFilters({
   onSortByChange,
   totalCount,
 }: MemoSearchFiltersProps) {
-  const countBadge = (
-    <span className="text-sm shrink-0">
-      <span className="text-[#22d3ee] font-medium">{totalCount}</span>
-      <span className="text-[#cbd5e1]"> 件</span>
-    </span>
-  )
-
   return (
     <>
-      {/* stickyエリア：ヘッダー(h-16=64px)直下に吸着。PCは件数もここに含める */}
+      {/* stickyエリア：ヘッダー(h-16=64px)直下に吸着 */}
       <div className="sticky top-16 z-40 pt-4 pb-3 -mx-4 px-4 bg-transparent backdrop-blur-md">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="w-full sm:max-w-sm">
@@ -79,14 +72,16 @@ export function MemoSearchFilters({
               </SelectContent>
             </Select>
           </div>
-
-          {/* PC のみ sticky エリア内に件数表示（ソートの直後に配置） */}
-          <div className="hidden sm:block">{countBadge}</div>
         </div>
       </div>
 
-      {/* スマホのみ sticky エリア外（スクロールで流れる） */}
-      <div className="sm:hidden mt-1">{countBadge}</div>
+      {/* 件数表示：PC・スマホ共通でstickyエリア外（検索バーの下） */}
+      <div className="mt-2">
+        <span className="text-sm">
+          <span className="text-[#22d3ee] font-medium">{totalCount}</span>
+          <span className="text-[#cbd5e1]"> 件</span>
+        </span>
+      </div>
     </>
   )
 }
