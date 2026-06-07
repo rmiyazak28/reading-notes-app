@@ -194,6 +194,7 @@ Skip unit tests when the target is:
 Execute only after the user confirms manual testing is complete.
 
 - Create Playwright e2e test code under `tests/e2e/tests/`.
+- Tests must be self-contained: use `beforeEach` to create any required test data via Supabase API, and `afterEach` to delete it. Never use `test.skip()` to work around missing data.
 - Run `npm run test:e2e`. If tests fail, apply the self-correction loop in `## On Errors`.
 - Once all tests pass, present the recommended commit message and wait for user approval.
   - Format: `test: <画面ID> <内容を日本語で>` (e.g. `test: MOD-01 書籍登録モーダルのe2eテストを実施`)
