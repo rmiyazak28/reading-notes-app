@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { searchMemos } from "@/features/memos/actions"
 
-// Supabase クエリビルダーはメソッドチェーンで条件を積み上げるため、
-// 全メソッドが自身を返すフルエントなモックオブジェクトを用意して、
-// range() だけを vi.fn() として resolve 値を制御する。
-const { mockRange, mockGetUser } = vi.hoisted(() => {
-  const mockRange = vi.fn()
+// query なし → builder.range() で終端、query あり → await builder（range なし）で終端。
+// どちらのパスも mockResult で resolve 値を制御できるよう、
+// builder を thenable にして range() も mockResult を呼ぶ構成にする。
+const { mockResult, mockGetUser } = vi.hoisted(() => {
+  const mockResult = vi.fn()
   const mockGetUser = vi.fn()
-  return { mockRange, mockGetUser }
+  return { mockResult, mockGetUser }
 })
 
 // フルエントなビルダーオブジェクト。メソッドはすべて自身を返す。
@@ -16,7 +16,11 @@ const chainMethods = ["select", "order", "eq", "or", "filter"]
 for (const m of chainMethods) {
   builder[m] = vi.fn(() => builder)
 }
-builder["range"] = mockRange
+// query なし: builder.range(...) が終端として呼ばれる
+builder["range"] = vi.fn(() => mockResult())
+// query あり: await builder が直接呼ばれるため thenable にする
+builder["then"] = (onfulfilled: (v: unknown) => unknown, onrejected?: (e: unknown) => unknown) =>
+  Promise.resolve(mockResult()).then(onfulfilled, onrejected)
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
@@ -44,6 +48,7 @@ beforeEach(() => {
   for (const m of chainMethods) {
     (builder[m] as ReturnType<typeof vi.fn>).mockReturnValue(builder)
   }
+  ;(builder["range"] as ReturnType<typeof vi.fn>).mockImplementation(() => mockResult())
 })
 
 describe("searchMemos", () => {
@@ -64,7 +69,7 @@ describe("searchMemos", () => {
     })
 
     it("メモ一覧を books 情報付きで返す", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [{ ...baseMemo, memo_tags: [{ tags: { id: "tag-1", name: "設計" } }] }],
         error: null,
       })
@@ -79,7 +84,7 @@ describe("searchMemos", () => {
     })
 
     it("memo_tags が空の場合 tags が空配列になる", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [{ ...baseMemo, memo_tags: [] }],
         error: null,
       })
@@ -90,7 +95,7 @@ describe("searchMemos", () => {
     })
 
     it("books が null の場合 book_title が空文字・book_author が null になる", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [{ ...baseMemo, books: null, memo_tags: [] }],
         error: null,
       })
@@ -102,7 +107,7 @@ describe("searchMemos", () => {
     })
 
     it("DB エラー時 DB_ERROR を返す", async () => {
-      mockRange.mockResolvedValue({ data: null, error: { message: "db error" } })
+      mockResult.mockResolvedValue({ data: null, error: { message: "db error" } })
 
       const result = await searchMemos({})
 
@@ -111,7 +116,7 @@ describe("searchMemos", () => {
     })
 
     it("favoriteOnly=true のとき eq('favorite', true) が呼ばれる", async () => {
-      mockRange.mockResolvedValue({ data: [], error: null })
+      mockResult.mockResolvedValue({ data: [], error: null })
 
       await searchMemos({ favoriteOnly: true })
 
@@ -119,7 +124,7 @@ describe("searchMemos", () => {
     })
 
     it("favoriteOnly=false のとき eq は呼ばれない", async () => {
-      mockRange.mockResolvedValue({ data: [], error: null })
+      mockResult.mockResolvedValue({ data: [], error: null })
 
       await searchMemos({ favoriteOnly: false })
 
@@ -127,7 +132,7 @@ describe("searchMemos", () => {
     })
 
     it("query があっても or() は呼ばれない（クライアント側フィルタで処理）", async () => {
-      mockRange.mockResolvedValue({ data: [], error: null })
+      mockResult.mockResolvedValue({ data: [], error: null })
 
       await searchMemos({ query: "テスト" })
 
@@ -135,7 +140,7 @@ describe("searchMemos", () => {
     })
 
     it("query が空文字の場合も or() は呼ばれない", async () => {
-      mockRange.mockResolvedValue({ data: [], error: null })
+      mockResult.mockResolvedValue({ data: [], error: null })
 
       await searchMemos({ query: "" })
 
@@ -149,7 +154,7 @@ describe("searchMemos", () => {
     })
 
     it("query がメモ内容に部分一致するメモだけ返す", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [
           { ...baseMemo, id: "m1", content: "命名は重要", memo_tags: [], books: { title: "本A", author: null } },
           { ...baseMemo, id: "m2", content: "全く関係ない", memo_tags: [], books: { title: "本B", author: null } },
@@ -164,7 +169,7 @@ describe("searchMemos", () => {
     })
 
     it("query が書籍名に部分一致するメモだけ返す", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [
           { ...baseMemo, id: "m1", content: "xyz", memo_tags: [], books: { title: "リーダブルコード", author: null } },
           { ...baseMemo, id: "m2", content: "xyz", memo_tags: [], books: { title: "別書籍", author: null } },
@@ -179,7 +184,7 @@ describe("searchMemos", () => {
     })
 
     it("query がタグ名に部分一致するメモだけ返す", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [
           {
             ...baseMemo, id: "m1", content: "xyz",
@@ -202,7 +207,7 @@ describe("searchMemos", () => {
     })
 
     it("query が著者名に部分一致するメモだけ返す", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [
           { ...baseMemo, id: "m1", content: "xyz", memo_tags: [], books: { title: "本A", author: "山田太郎" } },
           { ...baseMemo, id: "m2", content: "xyz", memo_tags: [], books: { title: "本B", author: "佐藤花子" } },
@@ -217,7 +222,7 @@ describe("searchMemos", () => {
     })
 
     it("query が空文字の場合全件返す（クライアントフィルタなし）", async () => {
-      mockRange.mockResolvedValue({
+      mockResult.mockResolvedValue({
         data: [
           { ...baseMemo, id: "m1", memo_tags: [], books: { title: "本A", author: null } },
           { ...baseMemo, id: "m2", memo_tags: [], books: { title: "本B", author: null } },

@@ -60,10 +60,12 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
     builder = builder.eq("favorite", true)
   }
 
-  // PostgREST の or() は結合テーブルのカラムを直接指定できないため、
-  // 書籍名・著者名・タグ名を含む横断検索はクライアント側フィルタで行う。
-  // query がある場合はクライアントフィルタで絞るため、サーバー側では全件取得する。
-  const { data, error } = await builder.range(offset, offset + limit - 1)
+  // PostgREST の or() は結合テーブルのカラムを直接指定できないため、横断検索はクライアント側で行う。
+  // query がある場合は全件取得してからクライアントフィルタで絞る（rangeを外すと全件返る）。
+  // query がない場合はページネーション用に range を適用する。
+  const { data, error } = query && query.trim()
+    ? await builder
+    : await builder.range(offset, offset + limit - 1)
 
   if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
 
