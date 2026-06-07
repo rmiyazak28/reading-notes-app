@@ -77,7 +77,7 @@ export function MemoEditPage({ memo, book, tagSuggestions }: Props) {
       }
 
       toast({ title: "メモを更新しました" })
-      router.push(`/books/${book.id}`)
+      router.back()
     })
   }
 
@@ -90,7 +90,7 @@ export function MemoEditPage({ memo, book, tagSuggestions }: Props) {
         return
       }
       toast({ title: "メモを削除しました" })
-      router.push(`/books/${book.id}`)
+      router.back()
     })
   }
 
