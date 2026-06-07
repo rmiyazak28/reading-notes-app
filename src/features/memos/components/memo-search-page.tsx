@@ -44,6 +44,8 @@ export function MemoSearchPage({
   const [editingMemo, setEditingMemo] = useState<MemoWithBook | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isLoadingMore, startLoadMoreTransition] = useTransition()
+  // 検索 transition と分離することで、星ボタンが検索フェッチの isPending に引きずられないようにする
+  const [isFavoriteToggling, startFavoriteTransition] = useTransition()
 
   // 検索条件変更をURLに反映する（debounce 付き）
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -115,7 +117,7 @@ export function MemoSearchPage({
   }
 
   const handleToggleFavorite = (memo: MemoWithBook) => {
-    startTransition(async () => {
+    startFavoriteTransition(async () => {
       const result = await toggleFavorite(memo.id)
       if (result.error) {
         toast({ title: "エラー", description: result.error.message, variant: "destructive" })
@@ -160,14 +162,14 @@ export function MemoSearchPage({
           {isMobile ? (
             <MemoSearchCardList
               memos={memos}
-              isPending={isPending}
+              isPending={isFavoriteToggling}
               sortBy={sortBy}
               onToggleFavorite={handleToggleFavorite}
             />
           ) : (
             <MemoSearchTable
               memos={memos}
-              isPending={isPending}
+              isPending={isFavoriteToggling}
               onEdit={setEditingMemo}
               onToggleFavorite={handleToggleFavorite}
             />
