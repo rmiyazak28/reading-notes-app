@@ -42,11 +42,15 @@ export function MemoSearchPage({
   const [favoriteOnly, setFavoriteOnly] = useState(initialFavoriteOnly)
   const [sortBy, setSortBy] = useState<"created_at" | "updated_at">(initialSortBy)
   const [editingMemo, setEditingMemo] = useState<MemoWithBook | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [isFetching, setIsFetching] = useState(false)
   const [isLoadingMore, startLoadMoreTransition] = useTransition()
   // useTransition を使うと Concurrent Mode の再レンダーで pending が解除されないケースがあるため、
   // メモ単位の Set でトグル中を管理する
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set())
+
+  // クエリあり時は PostgREST の制限で全件取得 → クライアント絞り込みが必要。
+  // 全件をキャッシュしておき「もっと見る」では追加 DB アクセスなしに次の PAGE_SIZE 件を表示する。
+  const cachedQueryResultsRef = useRef<MemoWithBook[]>([])
 
   // 検索条件変更をURLに反映する（debounce 付き）
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -62,18 +66,32 @@ export function MemoSearchPage({
     [pathname, router, searchParams]
   )
 
-  // 検索条件が変わったら先頭50件で再取得する
+  // 検索条件が変わったら先頭 PAGE_SIZE 件で再取得する
+  // startTransition に async を渡すと React 18 では状態更新が確実に反映されないケースがあるため、
+  // useState ベースのローディング管理に変更している
   const fetchMemos = useCallback(
-    (q: string, fav: boolean, sort: "created_at" | "updated_at") => {
-      startTransition(async () => {
+    async (q: string, fav: boolean, sort: "created_at" | "updated_at") => {
+      setIsFetching(true)
+      try {
         const result = await searchMemos({ query: q, favoriteOnly: fav, sortBy: sort, limit: PAGE_SIZE, offset: 0 })
         if (result.error) {
           toast({ title: "取得エラー", description: result.error.message, variant: "destructive" })
           return
         }
-        setMemos(result.data)
-        setHasMore(result.data.length === PAGE_SIZE)
-      })
+        if (q.trim()) {
+          // クエリあり：PostgREST 制限により全件取得 → キャッシュして先頭 PAGE_SIZE 件のみ表示
+          cachedQueryResultsRef.current = result.data
+          setMemos(result.data.slice(0, PAGE_SIZE))
+          setHasMore(result.data.length > PAGE_SIZE)
+        } else {
+          // クエリなし：DB 側ページネーション（range 適用済み）
+          cachedQueryResultsRef.current = []
+          setMemos(result.data)
+          setHasMore(result.data.length === PAGE_SIZE)
+        }
+      } finally {
+        setIsFetching(false)
+      }
     },
     []
   )
@@ -100,6 +118,17 @@ export function MemoSearchPage({
   }
 
   const handleLoadMore = () => {
+    if (query.trim()) {
+      // クエリあり：キャッシュ済み全件から次の PAGE_SIZE 件を表示（追加 DB アクセス不要）
+      setMemos(prev => {
+        const nextCount = prev.length + PAGE_SIZE
+        const next = cachedQueryResultsRef.current.slice(0, nextCount)
+        setHasMore(cachedQueryResultsRef.current.length > nextCount)
+        return next
+      })
+      return
+    }
+    // クエリなし：DB 側ページネーション
     startLoadMoreTransition(async () => {
       const result = await searchMemos({
         query,
