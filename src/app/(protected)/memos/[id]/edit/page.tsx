@@ -35,7 +35,7 @@ export default async function Page({ params, searchParams }: Props) {
   if (bookResult.error?.code === "NOT_FOUND") redirect("/books")
   if (bookResult.error) throw new Error(bookResult.error.message)
 
-  const backTo = from ? `/${from}` : `/books/${memo.book_id}`
+  const backTo = from === "memos" ? "/memos" : `/books/${memo.book_id}`
 
   return (
     <MemoEditPage

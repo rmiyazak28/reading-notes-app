@@ -12,7 +12,6 @@ import {
   Home,
   BookOpen,
   FileText,
-  Star,
   Settings,
   LogOut,
 } from "lucide-react"
@@ -41,7 +40,6 @@ const navItems = [
   { href: "/home", label: "ホーム", icon: Home },
   { href: "/books", label: "書籍一覧", icon: BookOpen },
   { href: "/memos", label: "全メモ検索", icon: FileText },
-  { href: "/favorites", label: "お気に入り", icon: Star },
 ]
 
 type Props = {
