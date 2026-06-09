@@ -1,8 +1,9 @@
 "use server"
 
 import { z } from "zod"
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import type { MemoWithTags, Tag } from "@/features/memos/types"
+import type { MemoWithTags, MemoWithBook, Tag } from "@/features/memos/types"
 
 type ActionError = {
   code: "UNAUTHORIZED" | "VALIDATION" | "NOT_FOUND" | "DB_ERROR" | "UNKNOWN"
@@ -17,8 +18,84 @@ type RawMemo = Omit<MemoWithTags, "tags"> & {
   memo_tags: { tags: { id: string; name: string } | null }[]
 }
 
+type RawMemoWithBook = Omit<MemoWithBook, "tags" | "book_title" | "book_author"> & {
+  memo_tags: { tags: { id: string; name: string } | null }[]
+  books: { title: string; author: string | null }
+}
+
 type GetMemosParams = {
-  bookId: string
+  bookId?: string
+  query?: string
+  favoriteOnly?: boolean
+  limit?: number
+  offset?: number
+}
+
+export type SearchMemosParams = {
+  query?: string
+  favoriteOnly?: boolean
+  sortBy?: "created_at" | "updated_at"
+  limit?: number
+  offset?: number
+}
+
+export async function searchMemos(params: SearchMemosParams): Promise<ActionResult<MemoWithBook[]>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
+
+  const { query, favoriteOnly, sortBy = "created_at", limit = 50, offset = 0 } = params
+
+  let builder = supabase
+    .from("reading_memos")
+    .select(`
+      *,
+      memo_tags (
+        tags (id, name)
+      ),
+      books (title, author)
+    `)
+    .order(sortBy, { ascending: false })
+
+  if (favoriteOnly) {
+    builder = builder.eq("favorite", true)
+  }
+
+  // PostgREST の or() は結合テーブルのカラムを直接指定できないため、横断検索はクライアント側で行う。
+  // query がある場合は全件取得してからクライアントフィルタで絞る（rangeを外すと全件返る）。
+  // query がない場合はページネーション用に range を適用する。
+  const { data, error } = query && query.trim()
+    ? await builder
+    : await builder.range(offset, offset + limit - 1)
+
+  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+
+  const memos: MemoWithBook[] = (data as unknown as RawMemoWithBook[]).map(
+    ({ memo_tags, books, ...rest }) => ({
+      ...rest,
+      book_title: books?.title ?? "",
+      book_author: books?.author ?? null,
+      tags: memo_tags
+        .filter((mt): mt is { tags: Tag } => mt.tags !== null)
+        .map(mt => mt.tags),
+    })
+  )
+
+  // タグ名での絞り込みはDB側ORでは難しいため、クエリがある場合はクライアント側で補完フィルタする
+  if (query && query.trim()) {
+    const q = query.trim().toLowerCase()
+    return {
+      data: memos.filter(m =>
+        m.content.toLowerCase().includes(q) ||
+        m.book_title.toLowerCase().includes(q) ||
+        (m.book_author?.toLowerCase().includes(q) ?? false) ||
+        m.tags.some(t => t.name.toLowerCase().includes(q))
+      ),
+      error: null,
+    }
+  }
+
+  return { data: memos, error: null }
 }
 
 export async function getMemos(params: GetMemosParams): Promise<ActionResult<MemoWithTags[]>> {
@@ -90,6 +167,7 @@ export async function deleteMemo(id: string): Promise<ActionResult<void>> {
 
   if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
 
+  revalidatePath("/memos")
   return { data: undefined, error: null }
 }
 
@@ -224,6 +302,7 @@ export async function updateMemo(id: string, input: UpdateMemoInput): Promise<Ac
 
   if (tagsError) return { data: null, error: { code: "DB_ERROR", message: tagsError.message } }
 
+  revalidatePath("/memos")
   return {
     data: { ...memo, tags: (resolvedTags ?? []) as Tag[] },
     error: null,

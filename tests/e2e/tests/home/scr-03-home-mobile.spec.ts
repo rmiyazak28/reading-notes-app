@@ -1,4 +1,4 @@
-import { test, expect, devices, type Page } from "@playwright/test"
+import { test, expect, devices } from "@playwright/test"
 import {
   createTestDb,
   createTestBook,
@@ -10,17 +10,6 @@ import {
 
 test.use({ ...devices["Pixel 5"] })
 
-const EMAIL = process.env.E2E_TEST_EMAIL
-const PASSWORD = process.env.E2E_TEST_PASSWORD
-
-async function login(page: Page): Promise<void> {
-  await page.goto("/login")
-  await page.getByLabel("メールアドレス").fill(EMAIL!)
-  await page.getByLabel("パスワード").fill(PASSWORD!)
-  await page.getByRole("button", { name: "ログイン" }).click()
-  await page.waitForURL("**/home")
-}
-
 async function selectBookStatus(page: Page, value: "unread" | "reading" | "completed"): Promise<void> {
   const labelMap = { unread: "未読", reading: "読書中", completed: "読了" }
   await page.getByRole("combobox").click()
@@ -29,8 +18,7 @@ async function selectBookStatus(page: Page, value: "unread" | "reading" | "compl
 
 test.describe("SCR-03 ホーム画面（スマホ）", () => {
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) test.skip()
-    await login(page)
+    await page.goto("/home")
   })
 
   // ── 1. サマリーバー ──

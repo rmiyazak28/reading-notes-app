@@ -6,10 +6,12 @@ import { MemoEditPage } from "@/features/memos/components/memo-edit-page"
 
 type Props = {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ from?: string }>
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { id } = await params
+  const { from } = await searchParams
 
   const memoResult = await getMemo(id)
   if (memoResult.error?.code === "NOT_FOUND") redirect("/books")
@@ -33,11 +35,14 @@ export default async function Page({ params }: Props) {
   if (bookResult.error?.code === "NOT_FOUND") redirect("/books")
   if (bookResult.error) throw new Error(bookResult.error.message)
 
+  const backTo = from ? `/${from}` : `/books/${memo.book_id}`
+
   return (
     <MemoEditPage
       memo={memo}
       book={bookResult.data!}
       tagSuggestions={tagsResult.data ?? []}
+      backTo={backTo}
     />
   )
 }

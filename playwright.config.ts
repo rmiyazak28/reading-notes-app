@@ -11,9 +11,11 @@ if (fs.existsSync(envLocalPath)) {
   }
 }
 
+const AUTH_FILE = "tests/.auth/user.json";
+
 export default defineConfig({
   outputDir: './tests/e2e/results',
-  testDir: "./tests/e2e/tests",
+  testDir: "./tests/e2e",
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
@@ -27,12 +29,26 @@ export default defineConfig({
 
   projects: [
     {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: AUTH_FILE,
+      },
+      dependencies: ["setup"],
+      testMatch: /tests\/.*\.spec\.ts/,
     },
     {
       name: "mobile-chrome",
-      use: { ...devices["Pixel 5"] },
+      use: {
+        ...devices["Pixel 5"],
+        storageState: AUTH_FILE,
+      },
+      dependencies: ["setup"],
+      testMatch: /tests\/.*\.spec\.ts/,
     },
   ],
 

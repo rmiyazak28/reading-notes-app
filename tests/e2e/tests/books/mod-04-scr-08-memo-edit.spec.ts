@@ -1,19 +1,11 @@
 import { test, expect, type Page } from "@playwright/test"
 
-const EMAIL = process.env.E2E_TEST_EMAIL
-const PASSWORD = process.env.E2E_TEST_PASSWORD
-
 const DESKTOP_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 const MOBILE_UA =
   "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36"
 
 async function login(page: Page): Promise<void> {
-  await page.goto("/login")
-  await page.getByLabel("メールアドレス").fill(EMAIL!)
-  await page.getByLabel("パスワード").fill(PASSWORD!)
-  await page.getByRole("button", { name: "ログイン" }).click()
-  await page.waitForURL("**/home")
   await page.goto("/books")
 }
 
@@ -65,7 +57,6 @@ test.describe("MOD-04 読書メモ編集モーダル（PC）", () => {
   test.use({ viewport: { width: 1280, height: 800 }, userAgent: DESKTOP_UA })
 
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) test.skip()
     await login(page)
   })
 
@@ -278,7 +269,6 @@ test.describe("SCR-08 読書メモ編集画面（モバイル）", () => {
   test.use({ viewport: { width: 375, height: 667 }, userAgent: MOBILE_UA })
 
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) test.skip()
     await login(page)
   })
 

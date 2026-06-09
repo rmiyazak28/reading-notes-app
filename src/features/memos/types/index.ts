@@ -22,3 +22,8 @@ export interface Memo {
 export interface MemoWithTags extends Memo {
   tags: Tag[]
 }
+
+export interface MemoWithBook extends MemoWithTags {
+  book_title: string
+  book_author: string | null
+}

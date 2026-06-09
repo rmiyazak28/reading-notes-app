@@ -1,14 +1,6 @@
 import { test, expect, type Page } from "@playwright/test"
 
-const EMAIL = process.env.E2E_TEST_EMAIL
-const PASSWORD = process.env.E2E_TEST_PASSWORD
-
-async function loginAndGoToBooks(page: Page): Promise<void> {
-  await page.goto("/login")
-  await page.getByLabel("メールアドレス").fill(EMAIL!)
-  await page.getByLabel("パスワード").fill(PASSWORD!)
-  await page.getByRole("button", { name: "ログイン" }).click()
-  await page.waitForURL("**/home")
+async function goToBooks(page: Page): Promise<void> {
   await page.goto("/books")
 }
 
@@ -17,11 +9,7 @@ async function loginAndGoToBooks(page: Page): Promise<void> {
 // ────────────────────────────────────────────
 test.describe("MOD-01 書籍登録モーダル（PC）", () => {
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) {
-      test.skip()
-      return
-    }
-    await loginAndGoToBooks(page)
+    await goToBooks(page)
   })
 
   test.describe("モーダルの開閉", () => {
@@ -132,11 +120,7 @@ test.describe("MOD-01 書籍登録モーダル（モバイル 375×667）", () =
   test.use({ viewport: { width: 375, height: 667 } })
 
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) {
-      test.skip()
-      return
-    }
-    await loginAndGoToBooks(page)
+    await goToBooks(page)
   })
 
   test("FAB をタップ → モーダルが表示される", async ({ page }) => {
