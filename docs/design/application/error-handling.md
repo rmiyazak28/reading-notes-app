@@ -30,7 +30,6 @@
 | SCR-04 書籍一覧 | テーブル行・カード |
 | SCR-05 書籍詳細 | 書籍ヘッダー・メモ一覧 |
 | SCR-06 全メモ検索 | メモ一覧 |
-| SCR-09 お気に入り | メモ一覧 |
 
 ### アクション中のUI制御
 
@@ -60,7 +59,7 @@ export default function Error({
 
 | 項目 | 内容 |
 |---|---|
-| 配置 | `(protected)/home/`・`books/`・`memos/`・`favorites/` 配下 |
+| 配置 | `(protected)/home/`・`books/`・`memos/` 配下 |
 | 表示内容 | 「データの取得に失敗しました」＋再試行ボタン |
 | 再試行 | `reset()` でError Boundaryをリセットし再レンダリング |
 

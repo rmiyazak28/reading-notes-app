@@ -23,8 +23,7 @@ src/
 │   │   │   ├── page.tsx            # SCR-06 全読書メモ検索
 │   │   │   └── [id]/
 │   │   │       └── edit/page.tsx   # SCR-08 読書メモ編集（スマホのみ）※[id]はmemo_id
-│   │   ├── favorites/page.tsx      # SCR-09 お気に入りメモ一覧
-│   │   └── settings/page.tsx       # SCR-10 設定
+│   │   └── settings/page.tsx       # SCR-09 設定
 │   │   
 │   ├── api/
 │   │   └── auth/

@@ -172,7 +172,7 @@ getMemos(params: GetMemosParams): Promise<ActionResult<MemoWithBook[]>>
 
 type GetMemosParams = {
   bookId?: string;      // 指定時: 書籍詳細画面用（F-11, F-13）
-                        // 未指定: 全メモ検索・お気に入り一覧用（F-14, F-16）
+                        // 未指定: 全メモ検索（F-14）
   query?: string;       // メモ内容・タグ・書籍名・著者名の部分一致
   favoriteOnly?: boolean;
   tagIds?: string[];
