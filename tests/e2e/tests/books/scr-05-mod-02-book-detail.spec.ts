@@ -1,14 +1,6 @@
 import { test, expect, type Page } from "@playwright/test"
 
-const EMAIL = process.env.E2E_TEST_EMAIL
-const PASSWORD = process.env.E2E_TEST_PASSWORD
-
 async function loginAndGoToBooks(page: Page): Promise<void> {
-  await page.goto("/login")
-  await page.getByLabel("メールアドレス").fill(EMAIL!)
-  await page.getByLabel("パスワード").fill(PASSWORD!)
-  await page.getByRole("button", { name: "ログイン" }).click()
-  await page.waitForURL("**/home")
   await page.goto("/books")
 }
 
@@ -32,10 +24,6 @@ async function createAndGoToBookDetail(page: Page, titleSuffix = ""): Promise<st
 // ────────────────────────────────────────────
 test.describe("SCR-05 書籍詳細画面（PC）", () => {
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) {
-      test.skip()
-      return
-    }
     await loginAndGoToBooks(page)
   })
 
@@ -89,10 +77,6 @@ test.describe("SCR-05 書籍詳細画面（PC）", () => {
 // ────────────────────────────────────────────
 test.describe("MOD-02 書籍編集モーダル（PC）", () => {
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) {
-      test.skip()
-      return
-    }
     await loginAndGoToBooks(page)
   })
 
@@ -229,10 +213,6 @@ test.describe("SCR-05 書籍詳細画面（モバイル 375×667）", () => {
   test.use({ viewport: { width: 375, height: 667 } })
 
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) {
-      test.skip()
-      return
-    }
     await loginAndGoToBooks(page)
   })
 

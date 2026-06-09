@@ -31,5 +31,6 @@ next-env.d.ts
 
 # test
 tests/e2e/results/
+tests/.auth/
 playwright-report/
 playwright/.cache/

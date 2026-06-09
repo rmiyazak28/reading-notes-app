@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test"
+import { test, expect } from "@playwright/test"
 import {
   createTestDb,
   createTestBook,
@@ -7,17 +7,6 @@ import {
   deleteTestMemo,
   type TestSupabaseClient,
 } from "../../helpers/db"
-
-const EMAIL = process.env.E2E_TEST_EMAIL
-const PASSWORD = process.env.E2E_TEST_PASSWORD
-
-async function login(page: Page): Promise<void> {
-  await page.goto("/login")
-  await page.getByLabel("メールアドレス").fill(EMAIL!)
-  await page.getByLabel("パスワード").fill(PASSWORD!)
-  await page.getByRole("button", { name: "ログイン" }).click()
-  await page.waitForURL("**/home")
-}
 
 /** Radix UI の Select で指定値を選択する */
 async function selectBookStatus(page: Page, value: "unread" | "reading" | "completed"): Promise<void> {
@@ -31,8 +20,7 @@ async function selectBookStatus(page: Page, value: "unread" | "reading" | "compl
 // ────────────────────────────────────────────
 test.describe("SCR-03 ホーム画面（PC）", () => {
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) test.skip()
-    await login(page)
+    await page.goto("/home")
   })
 
   // ── 1. サマリーバー ──
@@ -260,8 +248,7 @@ test.describe("SCR-03 ホーム画面（PC）", () => {
 // ────────────────────────────────────────────
 test.describe("SCR-03 空状態メッセージ", () => {
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) test.skip()
-    await login(page)
+    await page.goto("/home")
   })
 
   test("「最近のメモ」: 空メッセージまたはメモ行が表示される", async ({ page }) => {

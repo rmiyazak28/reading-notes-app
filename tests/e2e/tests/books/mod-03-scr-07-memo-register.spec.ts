@@ -1,14 +1,6 @@
 import { test, expect, type Page } from "@playwright/test"
 
-const EMAIL = process.env.E2E_TEST_EMAIL
-const PASSWORD = process.env.E2E_TEST_PASSWORD
-
 async function loginAndGoToBooks(page: Page): Promise<void> {
-  await page.goto("/login")
-  await page.getByLabel("メールアドレス").fill(EMAIL!)
-  await page.getByLabel("パスワード").fill(PASSWORD!)
-  await page.getByRole("button", { name: "ログイン" }).click()
-  await page.waitForURL("**/home")
   await page.goto("/books")
 }
 
@@ -42,10 +34,6 @@ test.describe("MOD-03 読書メモ登録モーダル（PC）", () => {
   test.use({ viewport: { width: 1280, height: 800 }, userAgent: DESKTOP_UA })
 
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) {
-      test.skip()
-      return
-    }
     await loginAndGoToBooks(page)
   })
 
@@ -235,10 +223,6 @@ test.describe("SCR-07 読書メモ登録画面（モバイル 375×667）", () =
   test.use({ viewport: { width: 375, height: 667 }, userAgent: MOBILE_UA })
 
   test.beforeEach(async ({ page }) => {
-    if (!EMAIL || !PASSWORD) {
-      test.skip()
-      return
-    }
     await loginAndGoToBooks(page)
   })
 
