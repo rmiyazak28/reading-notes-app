@@ -163,6 +163,12 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
     return { data: null, error: { code: "DB_ERROR", message: error.message } }
   }
 
+  // updateUser 後もクッキーの JWT クレームは古いままのため、
+  // セッションを再取得してクッキーを最新の user_metadata で上書きする
+  if (name !== undefined) {
+    await supabase.auth.refreshSession()
+  }
+
   return { data: undefined, error: null }
 }
 
