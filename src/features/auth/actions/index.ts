@@ -153,19 +153,43 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
   }
 
   const { name, email, password } = parsed.data
-  const updateData: Parameters<typeof supabase.auth.updateUser>[0] = {}
-  if (name !== undefined) updateData.data = { name }
-  if (email) updateData.email = email
-  if (password) updateData.password = password
 
-  const { error } = await supabase.auth.updateUser(updateData)
-  if (error) {
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  // email 以外（name / password）は通常の updateUser で更新する
+  if (name !== undefined || password) {
+    const updateData: Parameters<typeof supabase.auth.updateUser>[0] = {}
+    if (name !== undefined) updateData.data = { name }
+    if (password) updateData.password = password
+
+    const { error } = await supabase.auth.updateUser(updateData)
+    if (error) {
+      return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    }
+
+    // updateUser 後もクッキーの JWT クレームは古いままのため、
+    // セッションを再取得してクッキーを最新の user_metadata で上書きする
+    if (name !== undefined) {
+      await supabase.auth.refreshSession()
+    }
   }
 
-  // updateUser 後もクッキーの JWT クレームは古いままのため、
-  // セッションを再取得してクッキーを最新の user_metadata で上書きする
-  if (name !== undefined) {
+  // email は Supabase の "Secure Email Change" フローが古いアドレスを検証して
+  // 失敗するケースがあるため、Admin API で直接更新する
+  if (email) {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!serviceRoleKey || !supabaseUrl) {
+      return { data: null, error: { code: "UNKNOWN", message: "サーバー設定が不正です" } }
+    }
+
+    const adminClient = createAdminClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+
+    const { error } = await adminClient.auth.admin.updateUserById(user.id, { email })
+    if (error) {
+      return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    }
+
     await supabase.auth.refreshSession()
   }
 

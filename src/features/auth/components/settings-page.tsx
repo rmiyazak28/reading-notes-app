@@ -112,7 +112,8 @@ export function SettingsPage({ userName, userEmail }: Props) {
       toast({ title: "更新エラー", description: result.error.message, variant: "destructive" })
       return
     }
-    toast({ title: "確認メールを送信しました", description: "新しいメールアドレスに届いたリンクをクリックして変更を完了してください" })
+    toast({ title: "メールアドレスを更新しました" })
+    router.refresh()
   }
 
   // ── パスワード変更 ────────────────────────────────────────────────────────
