@@ -37,7 +37,13 @@ const emailSchema = z.object({
 
 const passwordSchema = z
   .object({
-    password: z.string().min(6, "6文字以上で入力してください"),
+    password: z
+      .string()
+      .min(1, "パスワードを入力してください")
+      .min(8, "パスワードは8文字以上で入力してください")
+      .max(72, "パスワードは72文字以内で入力してください")
+      .regex(/[a-zA-Z]/, "英字を1文字以上含めてください")
+      .regex(/[0-9]/, "数字を1文字以上含めてください"),
     passwordConfirm: z.string().min(1, "確認用パスワードを入力してください"),
   })
   .refine((v) => v.password === v.passwordConfirm, {

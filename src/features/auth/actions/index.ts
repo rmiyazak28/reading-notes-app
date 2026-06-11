@@ -127,7 +127,13 @@ const updateProfileSchema = z
   .object({
     name: z.string().optional(),
     email: z.string().email("メール形式で入力してください").optional(),
-    password: z.string().optional(),
+    password: z
+      .string()
+      .min(8, "パスワードは8文字以上で入力してください")
+      .max(72, "パスワードは72文字以内で入力してください")
+      .regex(/[a-zA-Z]/, "英字を1文字以上含めてください")
+      .regex(/[0-9]/, "数字を1文字以上含めてください")
+      .optional(),
     passwordConfirm: z.string().optional(),
   })
   .refine(
