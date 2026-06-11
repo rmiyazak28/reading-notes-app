@@ -259,7 +259,7 @@ export function HomePage({ initialData }: Props) {
             <SectionHeader
               title="お気に入りメモ"
               icon={<Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />}
-              linkHref="/favorites"
+              linkHref="/memos?favorite=1"
               linkLabel="一覧を見る"
             />
             {favoriteMemos.length === 0 ? (

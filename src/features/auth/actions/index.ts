@@ -1,6 +1,8 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createClient as createAdminClient } from "@supabase/supabase-js"
+import { z } from "zod"
 
 /** Server Actions が返す統一エラー型 */
 type ActionError = {
@@ -118,5 +120,115 @@ export async function signOut(): Promise<ActionResult<void>> {
     return { data: null, error: { code: "UNKNOWN", message: error.message } }
   }
 
+  return { data: undefined, error: null }
+}
+
+const updateProfileSchema = z
+  .object({
+    name: z.string().optional(),
+    email: z.string().email("メール形式で入力してください").optional(),
+    password: z
+      .string()
+      .min(8, "パスワードは8文字以上で入力してください")
+      .max(72, "パスワードは72文字以内で入力してください")
+      .regex(/[a-zA-Z]/, "英字を1文字以上含めてください")
+      .regex(/[0-9]/, "数字を1文字以上含めてください")
+      .optional(),
+    passwordConfirm: z.string().optional(),
+  })
+  .refine(
+    (v) => !v.password || v.password === v.passwordConfirm,
+    { message: "パスワードが一致しません", path: ["passwordConfirm"] }
+  )
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
+
+/**
+ * ユーザー情報（名前・メールアドレス・パスワード）を更新する。
+ */
+export async function updateProfile(input: UpdateProfileInput): Promise<ActionResult<void>> {
+  const parsed = updateProfileSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { data: null, error: { code: "UNAUTHORIZED", message: "ログインが必要です" } }
+  }
+
+  const { name, email, password } = parsed.data
+
+  // email 以外（name / password）は通常の updateUser で更新する
+  if (name !== undefined || password) {
+    const updateData: Parameters<typeof supabase.auth.updateUser>[0] = {}
+    if (name !== undefined) updateData.data = { name }
+    if (password) updateData.password = password
+
+    const { error } = await supabase.auth.updateUser(updateData)
+    if (error) {
+      return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    }
+
+    // updateUser 後もクッキーの JWT クレームは古いままのため、
+    // セッションを再取得してクッキーを最新の user_metadata で上書きする
+    if (name !== undefined) {
+      await supabase.auth.refreshSession()
+    }
+  }
+
+  // email は Supabase の "Secure Email Change" フローが古いアドレスを検証して
+  // 失敗するケースがあるため、Admin API で直接更新する
+  if (email) {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!serviceRoleKey || !supabaseUrl) {
+      return { data: null, error: { code: "UNKNOWN", message: "サーバー設定が不正です" } }
+    }
+
+    const adminClient = createAdminClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+
+    const { error } = await adminClient.auth.admin.updateUserById(user.id, { email })
+    if (error) {
+      return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    }
+
+    await supabase.auth.refreshSession()
+  }
+
+  return { data: undefined, error: null }
+}
+
+/**
+ * アカウントを削除する。Supabase Admin API を使用するため SUPABASE_SERVICE_ROLE_KEY が必要。
+ * books / reading_memos / tags は DB CASCADE DELETE で連鎖削除される。
+ */
+export async function deleteAccount(): Promise<ActionResult<void>> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { data: null, error: { code: "UNAUTHORIZED", message: "ログインが必要です" } }
+  }
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!serviceRoleKey || !supabaseUrl) {
+    return { data: null, error: { code: "UNKNOWN", message: "サーバー設定が不正です" } }
+  }
+
+  // Secret Key はサーバーサイドのみで使用し、クライアントには露出しない
+  const adminClient = createAdminClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+
+  const { error } = await adminClient.auth.admin.deleteUser(user.id)
+  if (error) {
+    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  }
+
+  await supabase.auth.signOut()
   return { data: undefined, error: null }
 }
