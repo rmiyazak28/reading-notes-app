@@ -55,3 +55,92 @@
 2. **Medium**: signUp / signIn のサーバーサイド Zod バリデーション追加
 3. **Medium**: getBooks の `.or()` フィルタエスケープ
 4. **Low / 要確認**: 上記以外を優先度順に、それぞれ小さな diff で個別対応
+
+---
+
+## 修正対応記録
+
+実施日: 2026-06-12 / 実施者: Claude Sonnet 4.6
+
+### High: updateProfile（メール変更）→ 対応済み
+
+- **対応内容:** Admin API（`auth.admin.updateUserById`）によるメール即時変更を廃止し、`supabase.auth.updateUser({ email })` による Secure Email Change フローに変更。
+- **変更ファイル:** `src/features/auth/actions/index.ts`
+- **コミット:** `fix: メールアドレス変更を Secure Email Change フローに修正`
+
+### Medium: Service Role Key の使用範囲 → 対応済み（High 対応に付随）
+
+- **対応内容:** High の修正により `updateProfile` での Admin API 使用が不要になり、Service Role Key の使用箇所が `deleteAccount` のみに戻った。設計書の記載と一致。
+- **変更ファイル:** `src/features/auth/actions/index.ts`
+
+### Medium: signUpWithEmail / signInWithEmail のバリデーション → 対応済み
+
+- **対応内容:** `signUpSchema`（name 必須・email 形式・パスワードポリシー）と `signInSchema`（email 形式・password 必須）を追加し、各 Action 冒頭で `safeParse` を実施。
+- **変更ファイル:** `src/features/auth/actions/index.ts`
+- **追加テスト:** `tests/unit/features/auth/actions/signup-signin.test.ts`（12ケース）
+- **コミット:** `fix: signUpWithEmail・signInWithEmail にサーバーサイド Zod バリデーションを追加`
+
+### Medium: getBooks の検索クエリ（PostgREST フィルタインジェクション）→ 対応済み
+
+- **対応内容:** `.or()` に埋め込む前にユーザー入力から `,()"\\'` を除去するサニタイズ処理を追加。
+- **変更ファイル:** `src/features/books/actions/index.ts`
+- **コミット:** `fix: getBooks の検索クエリを PostgREST フィルタインジェクション対策でサニタイズ`
+
+### Low: searchMemos の無制限取得 → 対応済み
+
+- **対応内容:** `query` 指定時の取得件数に上限 1000 件（`SEARCH_MAX`）を設定。
+- **変更ファイル:** `src/features/memos/actions/index.ts`
+- **コミット:** `fix: searchMemos のクエリ検索時に上限1000件を設定`
+
+### Low: 参照系 Action の入力バリデーション欠如 → 対応済み
+
+- **対応内容:** `searchMemosSchema`（sortBy enum・limit/offset 範囲）を追加。`toggleFavorite` / `deleteMemo` / `getMemo` / `getMemos` の ID 引数に `z.string().uuid()` チェックを追加。
+- **変更ファイル:** `src/features/memos/actions/index.ts`
+- **変更テスト:** `tests/unit/features/memos/actions/toggle-favorite.test.ts`、`tests/unit/features/memos/actions/get-memos.test.ts`（テスト用 UUID を RFC 4122 準拠に修正）
+- **コミット:** `fix: 参照系 Action に Zod バリデーションと UUID 検証を追加`
+
+### Low: memo_tags の tag_id 所有権 → 対応済み
+
+- **対応内容:** RLS の INSERT ポリシーに `tags.user_id = auth.uid()` の所有権検証を追加（`CREATE OR REPLACE POLICY` で DROP 不要）。設計書も更新。
+- **変更ファイル:** `supabase/migrations/20260612000001_fix_memo_tags_rls.sql`（新規作成・手動適用が必要）、`docs/design/auth/authorization.md`
+- **コミット:** `fix: memo_tags のINSERTポリシーにtag_id所有権検証を追加`
+- **注意:** マイグレーションファイルは Supabase ダッシュボードの SQL エディタで手動実行が必要。
+
+### Low: エラーメッセージの素通し → 対応済み
+
+- **対応内容:** 全 Action の `DB_ERROR` 時に `error.message`（内部スキーマ情報を含む可能性あり）を返していた箇所を「処理に失敗しました」に統一。`getBooks` の `error: booksError.message`（文字列返却）も同様に変更。
+- **変更ファイル:** `src/features/books/actions/index.ts`（5箇所）、`src/features/auth/actions/index.ts`（4箇所）、`src/features/memos/actions/index.ts`（前セッションで対応済み）
+- **コミット:** `fix: DBエラーメッセージの素通しを防ぐ汎用メッセージに統一`
+
+### Low: signUpWithEmail のエラー応答（ユーザー列挙）→ 対応済み
+
+- **対応内容:** Zod バリデーション通過後は Supabase の結果を問わず常に `{ data: undefined, error: null }` を返すよう変更。Supabase は登録済みアドレスへ別途通知メールを送信するため UX は維持される。
+- **変更ファイル:** `src/features/auth/actions/index.ts`
+- **変更テスト:** `tests/unit/features/auth/actions/signup-signin.test.ts`（DBエラーケースの期待値をユーザー列挙防止の確認ケースに変更）
+- **コミット:** `fix: signUpWithEmail でユーザー列挙を防ぐ一律応答を実装`
+
+### Low: セキュリティヘッダー未設定 → 対応済み
+
+- **対応内容:** `next.config.ts` の `headers()` に以下を全ルート（`/(.*)`）へ適用。
+  - `X-Frame-Options: DENY`（クリックジャッキング対策）
+  - `X-Content-Type-Options: nosniff`（MIME スニッフィング対策）
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- **変更ファイル:** `next.config.ts`
+- **コミット:** `fix: セキュリティヘッダー（X-Frame-Options・X-Content-Type-Options・Referrer-Policy・Permissions-Policy）を追加`
+
+### Low: 環境変数名の不一致 → 対応済み
+
+- **対応内容:** 実装はもともと `SUPABASE_SERVICE_ROLE_KEY` を使用しており、コード変更は不要。設計書と `.env.local.example` に残っていた `SUPABASE_SECRET_KEY` を `SUPABASE_SERVICE_ROLE_KEY` に統一（example から重複行を削除）。
+- **変更ファイル:** `.env.local.example`、`docs/design/auth/authorization.md`
+- **コミット:** `fix: 環境変数名を SUPABASE_SERVICE_ROLE_KEY に統一（設計書・example）`
+
+### 要確認: updateProfile の再認証なし → 許容済みリスクとして記録
+
+- **対応内容:** 本アプリは個人用途（SNS機能なし）であり、操作性を優先する設計判断としてリスクを許容。`docs/design/application/validation-design.md §7.6` に許容済みリスクである旨を明記。
+- **変更ファイル:** `docs/design/application/validation-design.md`
+- **コミット:** `docs: updateProfile の再認証なしを許容済みリスクとして設計書に明記`
+
+### 要確認: chart.tsx の dangerouslySetInnerHTML → 未使用を確認・削除は保留
+
+- **対応内容:** `src/components/ui/chart.tsx` を import しているファイルが存在しないことを確認（完全未使用）。CLAUDE.md の「Never delete files or directories」ルールにより削除は実施しない。将来的に削除を検討する場合はユーザー承認のもとで実施。
