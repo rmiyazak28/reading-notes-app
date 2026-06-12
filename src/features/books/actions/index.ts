@@ -76,7 +76,11 @@ const updateBookSchema = z.object({
   completed_at: z.string().nullable(),
 })
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function getBook(id: string): Promise<ActionResult<Book>> {
+  if (!UUID_REGEX.test(id)) return { data: null, error: { code: "NOT_FOUND", message: "書籍が見つかりません" } }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
