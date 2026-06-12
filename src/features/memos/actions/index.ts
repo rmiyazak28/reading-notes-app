@@ -258,6 +258,30 @@ type UpdateMemoInput = {
   favorite?: boolean
 }
 
+// 既存 id を持つタグはそのまま通過し、名前のみのタグはバッチ upsert で id を取得する（N クエリ → 1 クエリ）
+async function resolveTagIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  tags: { id?: string; name: string }[]
+): Promise<{ ids: string[] } | { error: { code: "DB_ERROR"; message: string } }> {
+  const existingIds = tags.filter(t => t.id).map(t => t.id!)
+  const newTagNames = tags.filter(t => !t.id).map(t => t.name)
+
+  if (newTagNames.length === 0) return { ids: existingIds }
+
+  const { data, error } = await supabase
+    .from("tags")
+    .upsert(
+      newTagNames.map(name => ({ user_id: userId, name })),
+      { onConflict: "user_id,name", ignoreDuplicates: false }
+    )
+    .select("id")
+
+  if (error) return { error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+
+  return { ids: [...existingIds, ...data.map(t => t.id)] }
+}
+
 export async function updateMemo(id: string, input: UpdateMemoInput): Promise<ActionResult<MemoWithTags>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -282,25 +306,9 @@ export async function updateMemo(id: string, input: UpdateMemoInput): Promise<Ac
   if (memoError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const tags = parsed.data.tags ?? []
-  const resolvedTagIds: string[] = []
-
-  for (const tag of tags) {
-    if (tag.id) {
-      resolvedTagIds.push(tag.id)
-    } else {
-      const { data: upserted, error: upsertError } = await supabase
-        .from("tags")
-        .upsert(
-          { user_id: user.id, name: tag.name },
-          { onConflict: "user_id,name", ignoreDuplicates: false }
-        )
-        .select("id, name")
-        .single()
-
-      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
-      resolvedTagIds.push(upserted.id)
-    }
-  }
+  const tagResult = await resolveTagIds(supabase, user.id, tags)
+  if ("error" in tagResult) return { data: null, error: tagResult.error }
+  const resolvedTagIds = tagResult.ids
 
   // 洗い替え：既存 memo_tags を削除して再 INSERT
   const { error: deleteError } = await supabase
@@ -377,26 +385,9 @@ export async function createMemo(input: CreateMemoInput): Promise<ActionResult<M
   if (memoError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const tags = parsed.data.tags ?? []
-  const resolvedTagIds: string[] = []
-
-  for (const tag of tags) {
-    if (tag.id) {
-      resolvedTagIds.push(tag.id)
-    } else {
-      // 新規タグ：同名が既存なら既存idを返す、なければINSERT
-      const { data: upserted, error: upsertError } = await supabase
-        .from("tags")
-        .upsert(
-          { user_id: user.id, name: tag.name },
-          { onConflict: "user_id,name", ignoreDuplicates: false }
-        )
-        .select("id, name")
-        .single()
-
-      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
-      resolvedTagIds.push(upserted.id)
-    }
-  }
+  const tagResult = await resolveTagIds(supabase, user.id, tags)
+  if ("error" in tagResult) return { data: null, error: tagResult.error }
+  const resolvedTagIds = tagResult.ids
 
   if (resolvedTagIds.length > 0) {
     const { error: tagError } = await supabase
