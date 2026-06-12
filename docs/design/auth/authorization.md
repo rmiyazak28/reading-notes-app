@@ -208,7 +208,7 @@ USING (
   )
 );
 
--- INSERT
+-- INSERT: メモ側とタグ側、両方の所有権を検証する
 CREATE POLICY "memo_tags_insert_own"
 ON memo_tags FOR INSERT
 TO authenticated
@@ -217,6 +217,12 @@ WITH CHECK (
     SELECT 1 FROM reading_memos
     WHERE reading_memos.id = memo_tags.memo_id
       AND reading_memos.user_id = auth.uid()
+  )
+  AND
+  EXISTS (
+    SELECT 1 FROM tags
+    WHERE tags.id = memo_tags.tag_id
+      AND tags.user_id = auth.uid()
   )
 );
 
