@@ -214,7 +214,9 @@ export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Boo
     .order("updated_at", { ascending: false })
 
   if (params.query) {
-    booksQuery = booksQuery.or(`title.ilike.%${params.query}%,author.ilike.%${params.query}%`)
+    // PostgREST の or() フィルタ文字列に直接埋め込むため、構文を壊す特殊文字を除去する
+    const safeQuery = params.query.replace(/[,()"\\']/g, "")
+    booksQuery = booksQuery.or(`title.ilike.%${safeQuery}%,author.ilike.%${safeQuery}%`)
   }
   if (params.status) {
     booksQuery = booksQuery.eq("status", params.status)
