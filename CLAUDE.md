@@ -39,28 +39,26 @@ src/
 │   │   ├── books/[id]/       # SCR-04, SCR-05
 │   │   │   └── memo/new/     # SCR-07 (mobile only)
 │   │   ├── memos/[id]/edit/  # SCR-06, SCR-08 (mobile only)
-│   │   ├── favorites/        # SCR-09
-│   │   └── settings/         # SCR-10
+│   │   └── settings/         # SCR-09
 │   └── api/auth/callback/    # Supabase OAuth callback (only Route Handler)
 ├── features/
-│   ├── books/    { components/, hooks/, actions/, types/ }
-│   ├── memos/    { components/, hooks/, actions/, types/ }
-│   └── auth/     { components/, hooks/, types/ }
+│   ├── books/    { components/, actions/, types/ }
+│   ├── memos/    { components/, actions/, types/ }
+│   ├── home/     { components/, actions/ }
+│   └── auth/     { components/, actions/ }
 ├── components/   { ui/, layout/, common/ }
 ├── lib/
 │   └── supabase/
-│       ├── client.ts     # Browser / Client Component
-│       ├── server.ts     # Server Components / Server Actions
-│       └── middleware.ts # Session refresh in Next.js Middleware
+│       ├── client.ts   # Browser / Client Component
+│       ├── server.ts   # Server Components / Server Actions
+│       └── proxy.ts    # Session refresh in Next.js Middleware
 ├── hooks/
-├── constants/
 ├── types/
 └── middleware.ts
 tests/
 ├── unit/   # vitest unit tests
 └── e2e/    # Playwright e2e tests
-└── tests/
-└── auth/
+    └── tests/
 ```
 
 ### Server Actions Pattern
