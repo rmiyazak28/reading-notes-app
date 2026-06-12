@@ -55,7 +55,7 @@ export async function createBook(input: CreateBookInput): Promise<ActionResult<B
   }
 
   return {
-    data: { ...data, memoCount: 0, starCount: 0 },
+    data: { ...data, status: data.status as ReadingStatus, memoCount: 0, starCount: 0 },
     error: null,
   }
 }
@@ -148,7 +148,7 @@ export async function updateBook(id: string, input: UpdateBookInput): Promise<Ac
     return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
-  return { data: { ...data, memoCount: 0, starCount: 0 }, error: null }
+  return { data: { ...data, status: data.status as ReadingStatus, memoCount: 0, starCount: 0 }, error: null }
 }
 
 export async function deleteBook(id: string): Promise<ActionResult<void>> {
