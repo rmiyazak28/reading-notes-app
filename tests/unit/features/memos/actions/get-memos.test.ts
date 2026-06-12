@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { getMemos } from "@/features/memos/actions"
 
+const BOOK_ID = "00000000-0000-4000-8000-000000000003"
+
 const { mockOrder, mockGetUser } = vi.hoisted(() => {
   const mockOrder = vi.fn()
   const mockGetUser = vi.fn()
@@ -29,7 +31,7 @@ describe("getMemos", () => {
     it("未認証の場合 UNAUTHORIZED を返す", async () => {
       mockGetUser.mockResolvedValue({ data: { user: null } })
 
-      const result = await getMemos({ bookId: "book-1" })
+      const result = await getMemos({ bookId: BOOK_ID })
 
       expect(result.data).toBeNull()
       expect(result.error?.code).toBe("UNAUTHORIZED")
@@ -47,7 +49,7 @@ describe("getMemos", () => {
           {
             id: "memo-1",
             user_id: "user-1",
-            book_id: "book-1",
+            book_id: BOOK_ID,
             page_number: 42,
             content: "テストメモ",
             favorite: false,
@@ -62,7 +64,7 @@ describe("getMemos", () => {
         error: null,
       })
 
-      const result = await getMemos({ bookId: "book-1" })
+      const result = await getMemos({ bookId: BOOK_ID })
 
       expect(result.error).toBeNull()
       expect(result.data).toHaveLength(1)
@@ -78,7 +80,7 @@ describe("getMemos", () => {
           {
             id: "memo-1",
             user_id: "user-1",
-            book_id: "book-1",
+            book_id: BOOK_ID,
             page_number: null,
             content: "タグなしメモ",
             favorite: true,
@@ -90,7 +92,7 @@ describe("getMemos", () => {
         error: null,
       })
 
-      const result = await getMemos({ bookId: "book-1" })
+      const result = await getMemos({ bookId: BOOK_ID })
 
       expect(result.data![0].tags).toEqual([])
     })
@@ -101,7 +103,7 @@ describe("getMemos", () => {
           {
             id: "memo-1",
             user_id: "user-1",
-            book_id: "book-1",
+            book_id: BOOK_ID,
             page_number: null,
             content: "メモ",
             favorite: false,
@@ -116,7 +118,7 @@ describe("getMemos", () => {
         error: null,
       })
 
-      const result = await getMemos({ bookId: "book-1" })
+      const result = await getMemos({ bookId: BOOK_ID })
 
       expect(result.data![0].tags).toHaveLength(1)
       expect(result.data![0].tags[0].name).toBe("有効タグ")
@@ -125,7 +127,7 @@ describe("getMemos", () => {
     it("メモが 0 件の場合は空配列を返す", async () => {
       mockOrder.mockResolvedValue({ data: [], error: null })
 
-      const result = await getMemos({ bookId: "book-1" })
+      const result = await getMemos({ bookId: BOOK_ID })
 
       expect(result.error).toBeNull()
       expect(result.data).toEqual([])
@@ -137,7 +139,7 @@ describe("getMemos", () => {
           {
             id: "memo-1",
             user_id: "user-1",
-            book_id: "book-1",
+            book_id: BOOK_ID,
             page_number: null,
             content: "メモ",
             favorite: false,
@@ -149,7 +151,7 @@ describe("getMemos", () => {
         error: null,
       })
 
-      const result = await getMemos({ bookId: "book-1" })
+      const result = await getMemos({ bookId: BOOK_ID })
 
       expect(result.data![0]).not.toHaveProperty("memo_tags")
     })
@@ -160,7 +162,7 @@ describe("getMemos", () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
       mockOrder.mockResolvedValue({ data: null, error: { message: "db error" } })
 
-      const result = await getMemos({ bookId: "book-1" })
+      const result = await getMemos({ bookId: BOOK_ID })
 
       expect(result.data).toBeNull()
       expect(result.error?.code).toBe("DB_ERROR")

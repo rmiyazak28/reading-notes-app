@@ -39,12 +39,25 @@ export type SearchMemosParams = {
   offset?: number
 }
 
+const searchMemosSchema = z.object({
+  query: z.string().optional(),
+  favoriteOnly: z.boolean().optional(),
+  sortBy: z.enum(["created_at", "updated_at"]).optional(),
+  limit: z.number().int().min(1).max(200).optional(),
+  offset: z.number().int().min(0).optional(),
+})
+
 export async function searchMemos(params: SearchMemosParams): Promise<ActionResult<MemoWithBook[]>> {
+  const parsed = searchMemosSchema.safeParse(params)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
 
-  const { query, favoriteOnly, sortBy = "created_at", limit = 50, offset = 0 } = params
+  const { query, favoriteOnly, sortBy = "created_at", limit = 50, offset = 0 } = parsed.data
 
   let builder = supabase
     .from("reading_memos")
@@ -100,6 +113,10 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
 }
 
 export async function getMemos(params: GetMemosParams): Promise<ActionResult<MemoWithTags[]>> {
+  if (params.bookId !== undefined && !z.string().uuid().safeParse(params.bookId).success) {
+    return { data: null, error: { code: "VALIDATION", message: "bookId が不正です" } }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
@@ -132,6 +149,10 @@ export async function getMemos(params: GetMemosParams): Promise<ActionResult<Mem
  * Supabase の update では NOT 演算子を直接記述できないため、この方式を採用している。
  */
 export async function toggleFavorite(id: string): Promise<ActionResult<{ favorite: boolean }>> {
+  if (!z.string().uuid().safeParse(id).success) {
+    return { data: null, error: { code: "VALIDATION", message: "id が不正です" } }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
@@ -157,6 +178,10 @@ export async function toggleFavorite(id: string): Promise<ActionResult<{ favorit
 }
 
 export async function deleteMemo(id: string): Promise<ActionResult<void>> {
+  if (!z.string().uuid().safeParse(id).success) {
+    return { data: null, error: { code: "VALIDATION", message: "id が不正です" } }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
@@ -189,6 +214,10 @@ export async function getTags(): Promise<ActionResult<Tag[]>> {
 }
 
 export async function getMemo(id: string): Promise<ActionResult<MemoWithTags>> {
+  if (!z.string().uuid().safeParse(id).success) {
+    return { data: null, error: { code: "VALIDATION", message: "id が不正です" } }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
