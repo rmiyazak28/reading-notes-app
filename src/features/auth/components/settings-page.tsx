@@ -1,7 +1,8 @@
 "use client"
 
-import { useTransition } from "react"
+import { useTransition, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -77,6 +78,8 @@ type Props = {
 
 export function SettingsPage({ userName, userEmail }: Props) {
   const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [isSignOutPending, startSignOutTransition] = useTransition()
   const [isDeletePending, startDeleteTransition] = useTransition()
 
@@ -226,25 +229,45 @@ export function SettingsPage({ userName, userEmail }: Props) {
         <Section title="パスワード変更">
           <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="space-y-3">
             <div className="space-y-1">
-              <Input
-                {...registerPassword("password")}
-                type="password"
-                placeholder="新しいパスワード"
-                className={inputClass}
-                aria-label="新しいパスワード"
-              />
+              <div className="relative">
+                <Input
+                  {...registerPassword("password")}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="新しいパスワード"
+                  className={inputClass}
+                  aria-label="新しいパスワード"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "パスワードを非表示" : "パスワードを表示"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordErrors.password && (
                 <p className="text-sm text-destructive">{passwordErrors.password.message}</p>
               )}
             </div>
             <div className="space-y-1">
-              <Input
-                {...registerPassword("passwordConfirm")}
-                type="password"
-                placeholder="パスワード確認"
-                className={inputClass}
-                aria-label="パスワード確認"
-              />
+              <div className="relative">
+                <Input
+                  {...registerPassword("passwordConfirm")}
+                  type={showPasswordConfirm ? "text" : "password"}
+                  placeholder="パスワード確認"
+                  className={inputClass}
+                  aria-label="パスワード確認"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordConfirm((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPasswordConfirm ? "パスワードを非表示" : "パスワードを表示"}
+                >
+                  {showPasswordConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordErrors.passwordConfirm && (
                 <p className="text-sm text-destructive">{passwordErrors.passwordConfirm.message}</p>
               )}
