@@ -25,11 +25,27 @@ type SignUpInput = {
   password: string
 }
 
+const signUpSchema = z.object({
+  name: z.string().min(1, "ユーザー名は必須です"),
+  email: z.string().email("メール形式で入力してください"),
+  password: z
+    .string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(72, "パスワードは72文字以内で入力してください")
+    .regex(/[a-zA-Z]/, "英字を1文字以上含めてください")
+    .regex(/[0-9]/, "数字を1文字以上含めてください"),
+})
+
 /** {@link signInWithEmail} の入力型 */
 type SignInInput = {
   email: string
   password: string
 }
+
+const signInSchema = z.object({
+  email: z.string().email("メール形式で入力してください"),
+  password: z.string().min(1, "パスワードは必須です"),
+})
 
 /**
  * メールアドレスとパスワードで新規ユーザーを登録する。
@@ -38,6 +54,11 @@ type SignInInput = {
  * @remarks Supabase のメール確認が有効な場合、登録後に確認メールが送信される
  */
 export async function signUpWithEmail(input: SignUpInput): Promise<ActionResult<void>> {
+  const parsed = signUpSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
   const supabase = await createClient()
 
   const { error } = await supabase.auth.signUp({
@@ -61,6 +82,11 @@ export async function signUpWithEmail(input: SignUpInput): Promise<ActionResult<
  * @returns 成功時は `data: undefined`、失敗時は `error` オブジェクト
  */
 export async function signInWithEmail(input: SignInInput): Promise<ActionResult<void>> {
+  const parsed = signInSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
   const supabase = await createClient()
 
   const { error } = await supabase.auth.signInWithPassword({
