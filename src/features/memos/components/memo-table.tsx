@@ -72,7 +72,7 @@ export function MemoTable({ memos, onToggleFavorite, onDelete, onEdit }: MemoTab
 
   if (memos.length === 0) {
     return (
-      <div className="glass rounded-lg p-8 text-center text-[#94a3b8]">
+      <div className="glass rounded-lg p-8 text-center text-muted-foreground">
         メモはまだありません
       </div>
     )
@@ -84,12 +84,12 @@ export function MemoTable({ memos, onToggleFavorite, onDelete, onEdit }: MemoTab
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="border-white/15 hover:bg-transparent">
-              <TableHead className="text-[#94a3b8] bg-white/5 w-[8%]">ページ</TableHead>
-              <TableHead className="text-[#94a3b8] bg-white/5 w-[44%]">内容</TableHead>
-              <TableHead className="text-[#94a3b8] bg-white/5 w-[21%]">タグ</TableHead>
-              <TableHead className="text-[#94a3b8] bg-white/5 w-[7%]">★</TableHead>
-              <TableHead className="text-[#94a3b8] bg-white/5 w-[12%]">登録日</TableHead>
-              <TableHead className="text-[#94a3b8] bg-white/5 w-[8%]"></TableHead>
+              <TableHead className="text-muted-foreground bg-white/5 w-[8%]">ページ</TableHead>
+              <TableHead className="text-muted-foreground bg-white/5 w-[44%]">内容</TableHead>
+              <TableHead className="text-muted-foreground bg-white/5 w-[21%]">タグ</TableHead>
+              <TableHead className="text-muted-foreground bg-white/5 w-[7%]">★</TableHead>
+              <TableHead className="text-muted-foreground bg-white/5 w-[12%]">登録日</TableHead>
+              <TableHead className="text-muted-foreground bg-white/5 w-[8%]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -99,18 +99,18 @@ export function MemoTable({ memos, onToggleFavorite, onDelete, onEdit }: MemoTab
                 className="border-white/15 hover:bg-white/5 transition-colors cursor-pointer"
                 onClick={() => onEdit?.(memo)}
               >
-                <TableCell className="text-[#cbd5e1] text-sm">
+                <TableCell className="text-foreground-secondary text-sm">
                   {memo.page_number != null ? `p.${memo.page_number}` : "—"}
                 </TableCell>
                 <TableCell className="overflow-hidden max-w-0 whitespace-normal">
-                  <p className="text-[#f1f5f9] text-sm line-clamp-2">{memo.content}</p>
+                  <p className="text-foreground text-sm line-clamp-2">{memo.content}</p>
                 </TableCell>
                 <TableCell className="overflow-hidden">
                   <div className="flex flex-wrap gap-1">
                     {memo.tags.map(tag => (
                       <span
                         key={tag.id}
-                        className="text-xs bg-white/10 text-[#cbd5e1] px-1.5 py-0.5 rounded"
+                        className="text-xs bg-white/10 text-foreground-secondary px-1.5 py-0.5 rounded"
                       >
                         #{tag.name}
                       </span>
@@ -125,11 +125,11 @@ export function MemoTable({ memos, onToggleFavorite, onDelete, onEdit }: MemoTab
                     aria-label={memo.favorite ? "お気に入り解除" : "お気に入りに追加"}
                   >
                     <Star
-                      className={`h-4 w-4 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-[#64748b] hover:text-amber-400"}`}
+                      className={`h-4 w-4 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim hover:text-amber-400"}`}
                     />
                   </button>
                 </TableCell>
-                <TableCell className="text-[#cbd5e1] text-sm">
+                <TableCell className="text-foreground-secondary text-sm">
                   {formatDate(memo.created_at)}
                 </TableCell>
                 <TableCell>
@@ -137,7 +137,7 @@ export function MemoTable({ memos, onToggleFavorite, onDelete, onEdit }: MemoTab
                     variant="ghost"
                     size="icon"
                     onClick={(e) => { e.stopPropagation(); setDeletingId(memo.id) }}
-                    className="h-7 w-7 text-[#64748b] hover:text-destructive hover:bg-destructive/10"
+                    className="h-7 w-7 text-foreground-dim hover:text-destructive hover:bg-destructive/10"
                     aria-label="メモを削除"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

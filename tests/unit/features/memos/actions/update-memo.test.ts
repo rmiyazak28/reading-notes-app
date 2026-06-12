@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { updateMemo } from "@/features/memos/actions"
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
+
 const MEMO_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const TAG_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 const TAG_ID2 = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
@@ -50,9 +52,7 @@ vi.mock("@/lib/supabase/server", () => ({
       if (table === "tags") {
         return {
           upsert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: mockUpsertTag,
-            })),
+            select: mockUpsertTag,
           })),
           select: vi.fn(() => ({
             in: mockSelectTags,
@@ -154,7 +154,7 @@ describe("updateMemo", () => {
     })
 
     it("新規タグ名（idなし）はupsertされる", async () => {
-      mockUpsertTag.mockResolvedValue({ data: { id: TAG_ID2, name: "新タグ" }, error: null })
+      mockUpsertTag.mockResolvedValue({ data: [{ id: TAG_ID2 }], error: null })
       mockInsertMemoTags.mockResolvedValue({ error: null })
       mockSelectTags.mockResolvedValue({ data: [{ id: TAG_ID2, name: "新タグ" }], error: null })
 

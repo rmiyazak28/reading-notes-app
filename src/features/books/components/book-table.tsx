@@ -33,13 +33,13 @@ export function BookTable({ books }: BookTableProps) {
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-white/15 hover:bg-transparent">
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[26%]">タイトル</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[18%]">著者</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[14%]">ジャンル</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[14%]">読書状態</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[9%] text-center">メモ数</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[9%]">★メモ</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[10%]">更新日</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[26%]">タイトル</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[18%]">著者</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[14%]">ジャンル</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[14%]">読書状態</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[9%] text-center">メモ数</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[9%]">★メモ</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[10%]">更新日</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -50,31 +50,31 @@ export function BookTable({ books }: BookTableProps) {
               onClick={() => router.push(`/books/${book.id}`)}
             >
               {/* max-w-0 は table-fixed 環境で truncate を機能させるために必要 */}
-              <TableCell className="font-medium text-[#f1f5f9] max-w-0 truncate" title={book.title}>
+              <TableCell className="font-medium text-foreground max-w-0 truncate" title={book.title}>
                 {book.title}
               </TableCell>
-              <TableCell className="text-[#cbd5e1] max-w-0 truncate" title={book.author ?? undefined}>
+              <TableCell className="text-foreground-secondary max-w-0 truncate" title={book.author ?? undefined}>
                 {book.author}
               </TableCell>
-              <TableCell className="text-[#cbd5e1]">
+              <TableCell className="text-foreground-secondary">
                 {book.genre}
               </TableCell>
               <TableCell>
                 <StatusBadge status={book.status} />
               </TableCell>
               <TableCell className="text-center">
-                <div className="flex items-center justify-center gap-1 text-[#cbd5e1]">
+                <div className="flex items-center justify-center gap-1 text-foreground-secondary">
                   <FileText className="h-4 w-4" />
                   <span>{book.memoCount}</span>
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-1 text-[#cbd5e1]">
+                <div className="flex items-center gap-1 text-foreground-secondary">
                   <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
                   <span>{book.starCount}</span>
                 </div>
               </TableCell>
-              <TableCell className="text-[#cbd5e1]">
+              <TableCell className="text-foreground-secondary">
                 {formatDate(book.updated_at)}
               </TableCell>
             </TableRow>

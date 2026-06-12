@@ -1,20 +1,12 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import type { ActionResult } from "@/types/actions"
 import type { Book } from "@/features/books/types"
 import type { MemoWithTags, Tag } from "@/features/memos/types"
 
 const HOME_LIMIT = 5
 const FAVORITE_LIMIT = 10
-
-type ActionError = {
-  code: "UNAUTHORIZED" | "DB_ERROR"
-  message: string
-}
-
-type ActionResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: ActionError }
 
 export type HomeMemoWithBook = MemoWithTags & {
   book: { id: string; title: string }
@@ -117,9 +109,9 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
       .eq("status", "reading"),
   ])
 
-  if (recentMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: recentMemosRes.error.message } }
-  if (favoriteMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: favoriteMemosRes.error.message } }
-  if (readingBooksRes.error) return { data: null, error: { code: "DB_ERROR", message: readingBooksRes.error.message } }
+  if (recentMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+  if (favoriteMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+  if (readingBooksRes.error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const starCountMap = new Map<string, number>()
   for (const row of starRes.data ?? []) {

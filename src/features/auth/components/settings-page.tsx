@@ -1,7 +1,8 @@
 "use client"
 
-import { useTransition } from "react"
+import { useTransition, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -60,10 +61,96 @@ type PasswordValues = z.infer<typeof passwordSchema>
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="glass rounded-xl border border-white/10 p-6 space-y-4">
-      <h2 className="text-sm font-semibold text-[#f1f5f9]">{title}</h2>
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       {children}
     </section>
   )
+}
+
+// ── Password form (isolated to prevent parent re-renders from resetting state) ─
+
+function PasswordFormInner({ inputClass, onSuccess }: { inputClass: string; onSuccess: () => void }) {
+  const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<PasswordValues>({
+    resolver: zodResolver(passwordSchema),
+  })
+
+  const onSubmit = async (values: PasswordValues) => {
+    const result = await updateProfile({ password: values.password, passwordConfirm: values.passwordConfirm })
+    if (result.error) {
+      toast({ title: "更新エラー", description: result.error.message, variant: "destructive" })
+      return
+    }
+    toast({ title: "パスワードを更新しました" })
+    onSuccess()
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <div className="space-y-1">
+        <div className="relative">
+          <Input
+            {...register("password")}
+            type={showPassword ? "text" : "password"}
+            placeholder="新しいパスワード"
+            className={inputClass}
+            aria-label="新しいパスワード"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={showPassword ? "パスワードを非表示" : "パスワードを表示"}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password.message}</p>
+        )}
+      </div>
+      <div className="space-y-1">
+        <div className="relative">
+          <Input
+            {...register("passwordConfirm")}
+            type={showPasswordConfirm ? "text" : "password"}
+            placeholder="パスワード確認"
+            className={inputClass}
+            aria-label="パスワード確認"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPasswordConfirm((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={showPasswordConfirm ? "パスワードを非表示" : "パスワードを表示"}
+          >
+            {showPasswordConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        {errors.passwordConfirm && (
+          <p className="text-sm text-destructive">{errors.passwordConfirm.message}</p>
+        )}
+      </div>
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+      >
+        {isSubmitting ? <Spinner className="h-4 w-4" /> : "更新する"}
+      </Button>
+    </form>
+  )
+}
+
+function PasswordForm({ inputClass }: { inputClass: string }) {
+  const [formKey, setFormKey] = useState(0)
+  return <PasswordFormInner key={formKey} inputClass={inputClass} onSuccess={() => setFormKey((k) => k + 1)} />
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -118,29 +205,8 @@ export function SettingsPage({ userName, userEmail }: Props) {
       toast({ title: "更新エラー", description: result.error.message, variant: "destructive" })
       return
     }
-    toast({ title: "メールアドレスを更新しました" })
+    toast({ title: "確認メールを送信しました", description: "メール内のリンクをクリックして変更を完了してください。" })
     router.refresh()
-  }
-
-  // ── パスワード変更 ────────────────────────────────────────────────────────
-
-  const {
-    register: registerPassword,
-    handleSubmit: handleSubmitPassword,
-    reset: resetPassword,
-    formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting },
-  } = useForm<PasswordValues>({
-    resolver: zodResolver(passwordSchema),
-  })
-
-  const onSubmitPassword = async (values: PasswordValues) => {
-    const result = await updateProfile({ password: values.password, passwordConfirm: values.passwordConfirm })
-    if (result.error) {
-      toast({ title: "更新エラー", description: result.error.message, variant: "destructive" })
-      return
-    }
-    toast({ title: "パスワードを更新しました" })
-    resetPassword()
   }
 
   // ── ログアウト ────────────────────────────────────────────────────────────
@@ -224,39 +290,7 @@ export function SettingsPage({ userName, userEmail }: Props) {
 
         {/* パスワード変更 */}
         <Section title="パスワード変更">
-          <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="space-y-3">
-            <div className="space-y-1">
-              <Input
-                {...registerPassword("password")}
-                type="password"
-                placeholder="新しいパスワード"
-                className={inputClass}
-                aria-label="新しいパスワード"
-              />
-              {passwordErrors.password && (
-                <p className="text-sm text-destructive">{passwordErrors.password.message}</p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Input
-                {...registerPassword("passwordConfirm")}
-                type="password"
-                placeholder="パスワード確認"
-                className={inputClass}
-                aria-label="パスワード確認"
-              />
-              {passwordErrors.passwordConfirm && (
-                <p className="text-sm text-destructive">{passwordErrors.passwordConfirm.message}</p>
-              )}
-            </div>
-            <Button
-              type="submit"
-              disabled={isPasswordSubmitting}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              {isPasswordSubmitting ? <Spinner className="h-4 w-4" /> : "更新する"}
-            </Button>
-          </form>
+          <PasswordForm inputClass={inputClass} />
         </Section>
 
         {/* ログアウト */}
@@ -265,7 +299,7 @@ export function SettingsPage({ userName, userEmail }: Props) {
             variant="outline"
             onClick={handleSignOut}
             disabled={isSignOutPending}
-            className="w-full glass border-white/10 text-[#94a3b8] hover:text-[#f1f5f9] hover:border-white/20"
+            className="w-full glass border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
           >
             {isSignOutPending ? <Spinner className="h-4 w-4" /> : "ログアウト"}
           </Button>

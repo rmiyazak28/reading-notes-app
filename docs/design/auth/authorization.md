@@ -208,7 +208,7 @@ USING (
   )
 );
 
--- INSERT
+-- INSERT: メモ側とタグ側、両方の所有権を検証する
 CREATE POLICY "memo_tags_insert_own"
 ON memo_tags FOR INSERT
 TO authenticated
@@ -217,6 +217,12 @@ WITH CHECK (
     SELECT 1 FROM reading_memos
     WHERE reading_memos.id = memo_tags.memo_id
       AND reading_memos.user_id = auth.uid()
+  )
+  AND
+  EXISTS (
+    SELECT 1 FROM tags
+    WHERE tags.id = memo_tags.tag_id
+      AND tags.user_id = auth.uid()
   )
 );
 
@@ -242,7 +248,7 @@ USING (
 | ルール | 内容 |
 |---|---|
 | 保管場所 | `.env.local`（Vercel環境変数） |
-| 環境変数名 | `SUPABASE_SECRET_KEY` |
+| 環境変数名 | `SUPABASE_SERVICE_ROLE_KEY` |
 | 使用箇所 | Server Actions のみ（`deleteAccount` 限定） |
 | クライアント露出 | 禁止。`NEXT_PUBLIC_` プレフィックスを付与しない |
 | 取得場所 | Supabase ダッシュボード「Settings > API Keys」タブ |

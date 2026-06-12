@@ -26,9 +26,9 @@ export function HomeCompactBookRow({ book }: HomeCompactBookRowProps) {
     >
       {/* タイトル・著者 */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[#f1f5f9] truncate">{book.title}</p>
+        <p className="text-sm text-foreground truncate">{book.title}</p>
         {book.author && (
-          <p className="text-xs text-[#64748b] truncate">{book.author}</p>
+          <p className="text-xs text-foreground-dim truncate">{book.author}</p>
         )}
       </div>
 
@@ -38,7 +38,7 @@ export function HomeCompactBookRow({ book }: HomeCompactBookRowProps) {
       </div>
 
       {/* メモ数・★ */}
-      <div className="shrink-0 flex items-center gap-2 text-xs text-[#94a3b8]">
+      <div className="shrink-0 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-0.5">
           <FileText className="h-3 w-3" />
           {book.memoCount ?? 0}
@@ -50,7 +50,7 @@ export function HomeCompactBookRow({ book }: HomeCompactBookRowProps) {
       </div>
 
       {/* 更新月 */}
-      <p className="shrink-0 text-xs text-[#64748b] hidden lg:block">
+      <p className="shrink-0 text-xs text-foreground-dim hidden lg:block">
         {formatDate(book.updated_at)}
       </p>
     </div>

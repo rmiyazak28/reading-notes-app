@@ -2,16 +2,8 @@
 
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
+import type { ActionResult } from "@/types/actions"
 import type { Book, ReadingStatus } from "@/features/books/types"
-
-type ActionError = {
-  code: "UNAUTHORIZED" | "VALIDATION" | "NOT_FOUND" | "DB_ERROR" | "UNKNOWN"
-  message: string
-}
-
-type ActionResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: ActionError }
 
 type CreateBookInput = {
   title: string
@@ -59,11 +51,11 @@ export async function createBook(input: CreateBookInput): Promise<ActionResult<B
     if (error.code === "23505") {
       return { data: null, error: { code: "VALIDATION", message: "同じタイトルの書籍がすでに登録されています" } }
     }
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   return {
-    data: { ...data, memoCount: 0, starCount: 0 },
+    data: { ...data, status: data.status as ReadingStatus, memoCount: 0, starCount: 0 },
     error: null,
   }
 }
@@ -84,7 +76,11 @@ const updateBookSchema = z.object({
   completed_at: z.string().nullable(),
 })
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function getBook(id: string): Promise<ActionResult<Book>> {
+  if (!UUID_REGEX.test(id)) return { data: null, error: { code: "NOT_FOUND", message: "書籍が見つかりません" } }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
@@ -100,7 +96,7 @@ export async function getBook(id: string): Promise<ActionResult<Book>> {
     if (error.code === "PGRST116") {
       return { data: null, error: { code: "NOT_FOUND", message: "書籍が見つかりません" } }
     }
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   const { data: starData } = await supabase
@@ -153,10 +149,10 @@ export async function updateBook(id: string, input: UpdateBookInput): Promise<Ac
     if (error.code === "23505") {
       return { data: null, error: { code: "VALIDATION", message: "同じタイトルの書籍がすでに登録されています" } }
     }
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
-  return { data: { ...data, memoCount: 0, starCount: 0 }, error: null }
+  return { data: { ...data, status: data.status as ReadingStatus, memoCount: 0, starCount: 0 }, error: null }
 }
 
 export async function deleteBook(id: string): Promise<ActionResult<void>> {
@@ -169,7 +165,7 @@ export async function deleteBook(id: string): Promise<ActionResult<void>> {
     .delete()
     .eq("id", id)
 
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   return { data: undefined, error: null }
 }
@@ -203,10 +199,10 @@ type RawBook = Omit<Book, "memoCount"> & {
  *   starCount は `favorite=true` に絞ったカウントが必要で、Supabase の集計構文はフィルタ付きカウントを
  *   同一クエリ内に直接記述できないため、別クエリで取得して Map に変換している。
  */
-export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Book[] | null; error: string | null }> {
+export async function getBooks(params: GetBooksParams = {}): Promise<ActionResult<Book[]>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: "UNAUTHORIZED" }
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
 
   let booksQuery = supabase
     .from("books")
@@ -214,7 +210,9 @@ export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Boo
     .order("updated_at", { ascending: false })
 
   if (params.query) {
-    booksQuery = booksQuery.or(`title.ilike.%${params.query}%,author.ilike.%${params.query}%`)
+    // PostgREST の or() フィルタ文字列に直接埋め込むため、構文を壊す特殊文字を除去する
+    const safeQuery = params.query.replace(/[,()"\\']/g, "")
+    booksQuery = booksQuery.or(`title.ilike.%${safeQuery}%,author.ilike.%${safeQuery}%`)
   }
   if (params.status) {
     booksQuery = booksQuery.eq("status", params.status)
@@ -224,7 +222,7 @@ export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Boo
   }
 
   const { data: booksData, error: booksError } = await booksQuery
-  if (booksError) return { data: null, error: booksError.message }
+  if (booksError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   if (!booksData || booksData.length === 0) return { data: [], error: null }
 
   // .in(bookIds) は書籍数分のUUIDをURLクエリに展開するため件数が増えると極端に低速になる。

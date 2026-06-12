@@ -29,7 +29,7 @@ function formatDate(dateStr: string): string {
 export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }: MemoSearchTableProps) {
   if (memos.length === 0) {
     return (
-      <div className="glass rounded-lg p-8 text-center text-[#94a3b8]">
+      <div className="glass rounded-lg p-8 text-center text-muted-foreground">
         メモが見つかりません
       </div>
     )
@@ -40,12 +40,12 @@ export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-white/15 hover:bg-transparent">
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[20%]">書籍名</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[6%]">ページ</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[40%]">メモ内容</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[18%]">タグ</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[6%]">★</TableHead>
-            <TableHead className="text-[#94a3b8] bg-white/5 w-[10%]">登録日 / 更新日</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[20%]">書籍名</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[6%]">ページ</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[40%]">メモ内容</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[18%]">タグ</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[6%]">★</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[10%]">登録日 / 更新日</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -56,23 +56,23 @@ export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }
               onClick={() => onEdit(memo)}
             >
               <TableCell className="overflow-hidden max-w-0">
-                <p className="text-[#cbd5e1] text-sm truncate">{memo.book_title}</p>
+                <p className="text-foreground-secondary text-sm truncate">{memo.book_title}</p>
                 {memo.book_author && (
-                  <p className="text-[#64748b] text-xs truncate mt-0.5">{memo.book_author}</p>
+                  <p className="text-foreground-dim text-xs truncate mt-0.5">{memo.book_author}</p>
                 )}
               </TableCell>
-              <TableCell className="text-[#94a3b8] text-sm">
+              <TableCell className="text-muted-foreground text-sm">
                 {memo.page_number != null ? `p.${memo.page_number}` : "—"}
               </TableCell>
               <TableCell className="overflow-hidden max-w-0 whitespace-normal">
-                <p className="text-[#f1f5f9] text-sm line-clamp-2">{memo.content}</p>
+                <p className="text-foreground text-sm line-clamp-2">{memo.content}</p>
               </TableCell>
               <TableCell className="overflow-hidden">
                 <div className="flex flex-wrap gap-1">
                   {memo.tags.map(tag => (
                     <span
                       key={tag.id}
-                      className="text-xs bg-white/10 text-[#cbd5e1] px-1.5 py-0.5 rounded"
+                      className="text-xs bg-white/10 text-foreground-secondary px-1.5 py-0.5 rounded"
                     >
                       #{tag.name}
                     </span>
@@ -87,13 +87,13 @@ export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }
                   aria-label={memo.favorite ? "お気に入り解除" : "お気に入りに追加"}
                 >
                   <Star
-                    className={`h-4 w-4 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-[#64748b] hover:text-amber-400"}`}
+                    className={`h-4 w-4 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim hover:text-amber-400"}`}
                   />
                 </button>
               </TableCell>
               <TableCell>
-                <p className="text-[#cbd5e1] text-xs">登録: {formatDate(memo.created_at)}</p>
-                <p className="text-[#94a3b8] text-xs mt-0.5">更新: {formatDate(memo.updated_at)}</p>
+                <p className="text-foreground-secondary text-xs">登録: {formatDate(memo.created_at)}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">更新: {formatDate(memo.updated_at)}</p>
               </TableCell>
             </TableRow>
           ))}

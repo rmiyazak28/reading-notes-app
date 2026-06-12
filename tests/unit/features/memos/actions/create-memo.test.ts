@@ -43,6 +43,9 @@ vi.mock("@/lib/supabase/server", () => ({
       }
       if (table === "tags") {
         return {
+          upsert: vi.fn(() => ({
+            select: vi.fn().mockResolvedValue({ data: [], error: null }),
+          })),
           select: vi.fn(() => ({
             in: mockSelectTags,
           })),

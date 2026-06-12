@@ -3,20 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { z } from "zod"
-
-/** Server Actions が返す統一エラー型 */
-type ActionError = {
-  code: "UNAUTHORIZED" | "VALIDATION" | "DB_ERROR" | "UNKNOWN"
-  message: string
-}
-
-/**
- * Server Actions の統一戻り値型。
- * 成功時は data に結果、error は null。失敗時はその逆。
- */
-type ActionResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: ActionError }
+import type { ActionResult } from "@/types/actions"
 
 /** {@link signUpWithEmail} の入力型 */
 type SignUpInput = {
@@ -25,11 +12,27 @@ type SignUpInput = {
   password: string
 }
 
+const signUpSchema = z.object({
+  name: z.string().min(1, "ユーザー名は必須です"),
+  email: z.string().email("メール形式で入力してください"),
+  password: z
+    .string()
+    .min(8, "パスワードは8文字以上で入力してください")
+    .max(72, "パスワードは72文字以内で入力してください")
+    .regex(/[a-zA-Z]/, "英字を1文字以上含めてください")
+    .regex(/[0-9]/, "数字を1文字以上含めてください"),
+})
+
 /** {@link signInWithEmail} の入力型 */
 type SignInInput = {
   email: string
   password: string
 }
+
+const signInSchema = z.object({
+  email: z.string().email("メール形式で入力してください"),
+  password: z.string().min(1, "パスワードは必須です"),
+})
 
 /**
  * メールアドレスとパスワードで新規ユーザーを登録する。
@@ -38,19 +41,22 @@ type SignInInput = {
  * @remarks Supabase のメール確認が有効な場合、登録後に確認メールが送信される
  */
 export async function signUpWithEmail(input: SignUpInput): Promise<ActionResult<void>> {
+  const parsed = signUpSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signUp({
+  // ユーザー列挙防止: 登録済みメールアドレスでもエラーを返さない。
+  // Supabase は登録済みの場合、既存ユーザーへ別途通知メールを送信する。
+  await supabase.auth.signUp({
     email: input.email,
     password: input.password,
     options: {
       data: { name: input.name },
     },
   })
-
-  if (error) {
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
-  }
 
   return { data: undefined, error: null }
 }
@@ -61,6 +67,11 @@ export async function signUpWithEmail(input: SignUpInput): Promise<ActionResult<
  * @returns 成功時は `data: undefined`、失敗時は `error` オブジェクト
  */
 export async function signInWithEmail(input: SignInInput): Promise<ActionResult<void>> {
+  const parsed = signInSchema.safeParse(input)
+  if (!parsed.success) {
+    return { data: null, error: { code: "VALIDATION", message: parsed.error.issues[0].message } }
+  }
+
   const supabase = await createClient()
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -160,43 +171,37 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
 
   const { name, email, password } = parsed.data
 
-  // email 以外（name / password）は通常の updateUser で更新する
-  if (name !== undefined || password) {
-    const updateData: Parameters<typeof supabase.auth.updateUser>[0] = {}
-    if (name !== undefined) updateData.data = { name }
-    if (password) updateData.password = password
+  try {
+    // email 以外（name / password）は通常の updateUser で更新する
+    if (name !== undefined || password) {
+      const updateData: Parameters<typeof supabase.auth.updateUser>[0] = {}
+      if (name !== undefined) updateData.data = { name }
+      if (password) updateData.password = password
 
-    const { error } = await supabase.auth.updateUser(updateData)
-    if (error) {
-      return { data: null, error: { code: "DB_ERROR", message: error.message } }
+      const { error } = await supabase.auth.updateUser(updateData)
+      if (error) {
+        if (password && error.message.toLowerCase().includes("different from the old password")) {
+          return { data: null, error: { code: "VALIDATION", message: "現在と異なるパスワードを入力してください" } }
+        }
+        return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+      }
+
+      // updateUser 後もクッキーの JWT クレームは古いままのため、
+      // セッションを再取得してクッキーを最新の user_metadata で上書きする
+      if (name !== undefined) {
+        await supabase.auth.refreshSession()
+      }
     }
 
-    // updateUser 後もクッキーの JWT クレームは古いままのため、
-    // セッションを再取得してクッキーを最新の user_metadata で上書きする
-    if (name !== undefined) {
-      await supabase.auth.refreshSession()
+    // Secure Email Change: 新メールアドレスへ確認リンクを送信し、クリック後に変更が反映される
+    if (email) {
+      const { error } = await supabase.auth.updateUser({ email })
+      if (error) {
+        return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+      }
     }
-  }
-
-  // email は Supabase の "Secure Email Change" フローが古いアドレスを検証して
-  // 失敗するケースがあるため、Admin API で直接更新する
-  if (email) {
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    if (!serviceRoleKey || !supabaseUrl) {
-      return { data: null, error: { code: "UNKNOWN", message: "サーバー設定が不正です" } }
-    }
-
-    const adminClient = createAdminClient(supabaseUrl, serviceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-
-    const { error } = await adminClient.auth.admin.updateUserById(user.id, { email })
-    if (error) {
-      return { data: null, error: { code: "DB_ERROR", message: error.message } }
-    }
-
-    await supabase.auth.refreshSession()
+  } catch {
+    return { data: null, error: { code: "UNKNOWN", message: "処理に失敗しました" } }
   }
 
   return { data: undefined, error: null }
@@ -226,7 +231,7 @@ export async function deleteAccount(): Promise<ActionResult<void>> {
 
   const { error } = await adminClient.auth.admin.deleteUser(user.id)
   if (error) {
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   await supabase.auth.signOut()

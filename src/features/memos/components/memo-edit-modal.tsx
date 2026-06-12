@@ -1,9 +1,7 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
+import { useEffect } from "react"
+import { Controller } from "react-hook-form"
 import { Star } from "lucide-react"
 import {
   Dialog,
@@ -26,21 +24,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Spinner } from "@/components/ui/spinner"
 import { TagInput } from "@/features/memos/components/tag-input"
-import { toast } from "@/hooks/use-toast"
-import { updateMemo, deleteMemo } from "@/features/memos/actions"
+import { useMemoEditForm } from "@/features/memos/hooks/use-memo-form"
 import type { MemoWithTags, Tag } from "@/features/memos/types"
-
-const memoEditSchema = z.object({
-  page_number: z.string().refine(
-    v => v === "" || (Number.isInteger(Number(v)) && Number(v) >= 1),
-    { message: "1以上の整数で入力してください" }
-  ),
-  content: z.string().min(1, "メモ内容は必須です").max(5000, "5000文字以内で入力してください"),
-  tags: z.array(z.object({ id: z.string().optional(), name: z.string() })),
-  favorite: z.boolean(),
-})
-
-type FormValues = z.infer<typeof memoEditSchema>
 
 type Props = {
   memo: MemoWithTags | null
@@ -52,19 +37,29 @@ type Props = {
 }
 
 export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, tagSuggestions }: Props) {
-  const [isPending, startTransition] = useTransition()
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
-
-  const { register, handleSubmit, control, watch, reset, formState: { errors } } =
-    useForm<FormValues>({
-      resolver: zodResolver(memoEditSchema),
-      defaultValues: {
-        page_number: "",
-        content: "",
-        tags: [],
-        favorite: false,
-      },
-    })
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+    watchFavorite,
+    isPending,
+    onSubmit,
+    handleDelete,
+    isDeleteConfirmOpen,
+    setIsDeleteConfirmOpen,
+  } = useMemoEditForm({
+    memo,
+    onSuccess: (updated) => {
+      onSuccess(updated)
+      onOpenChange(false)
+    },
+    onDelete: (id) => {
+      onDelete(id)
+      onOpenChange(false)
+    },
+  })
 
   useEffect(() => {
     if (open && memo) {
@@ -80,45 +75,6 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
     }
   }, [open, memo]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const watchFavorite = watch("favorite")
-
-  const onSubmit = (values: FormValues) => {
-    if (!memo) return
-    startTransition(async () => {
-      const result = await updateMemo(memo.id, {
-        page_number: values.page_number ? Number(values.page_number) : null,
-        content: values.content,
-        tags: values.tags,
-        favorite: values.favorite,
-      })
-
-      if (result.error) {
-        toast({ title: "更新エラー", description: result.error.message, variant: "destructive" })
-        return
-      }
-
-      toast({ title: "メモを更新しました" })
-      onSuccess(result.data)
-      onOpenChange(false)
-    })
-  }
-
-  const handleDelete = () => {
-    if (!memo) return
-    const id = memo.id
-    setIsDeleteConfirmOpen(false)
-    startTransition(async () => {
-      const result = await deleteMemo(id)
-      if (result.error) {
-        toast({ title: "削除エラー", description: result.error.message, variant: "destructive" })
-        return
-      }
-      toast({ title: "メモを削除しました" })
-      onDelete(id)
-      onOpenChange(false)
-    })
-  }
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -130,7 +86,7 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* ページ数 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-page-number">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-page-number">
                 ページ数
               </label>
               <Input
@@ -148,7 +104,7 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
 
             {/* メモ内容 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-content">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-content">
                 メモ内容 <span className="text-destructive">*</span>
               </label>
               <Textarea
@@ -165,7 +121,7 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
 
             {/* タグ */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]">タグ</label>
+              <label className="text-sm text-foreground-secondary">タグ</label>
               <Controller
                 control={control}
                 name="tags"
@@ -188,11 +144,11 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
                   type="button"
                   onClick={() => field.onChange(!field.value)}
                   aria-label="お気に入り切替"
-                  className="flex items-center gap-2 text-sm text-[#cbd5e1] hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors"
                 >
                   <Star
                     className={`h-4 w-4 transition-colors ${
-                      watchFavorite ? "text-amber-400 fill-amber-400" : "text-[#64748b]"
+                      watchFavorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim"
                     }`}
                   />
                   お気に入りに追加

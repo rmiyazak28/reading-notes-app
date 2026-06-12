@@ -98,7 +98,7 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div className="space-y-1.5">
-        <label className="text-sm text-[#cbd5e1]" htmlFor="name">
+        <label className="text-sm text-foreground-secondary" htmlFor="name">
           ユーザー名
         </label>
         <Input
@@ -115,7 +115,7 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm text-[#cbd5e1]" htmlFor="email">
+        <label className="text-sm text-foreground-secondary" htmlFor="email">
           メールアドレス
         </label>
         <Input
@@ -132,7 +132,7 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm text-[#cbd5e1]" htmlFor="password">
+        <label className="text-sm text-foreground-secondary" htmlFor="password">
           パスワード
         </label>
         <div className="relative">
@@ -159,7 +159,7 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm text-[#cbd5e1]" htmlFor="confirmPassword">
+        <label className="text-sm text-foreground-secondary" htmlFor="confirmPassword">
           パスワード（確認）
         </label>
         <div className="relative">
@@ -196,7 +196,7 @@ export function SignupForm() {
 
       <div className="relative flex items-center gap-3 py-1">
         <div className="flex-1 h-px bg-white/10" />
-        <span className="text-xs text-[#cbd5e1]">または</span>
+        <span className="text-xs text-foreground-secondary">または</span>
         <div className="flex-1 h-px bg-white/10" />
       </div>
 
@@ -205,7 +205,7 @@ export function SignupForm() {
         variant="outline"
         disabled={isAnyPending}
         onClick={handleGoogleLogin}
-        className="w-full border-white/10 bg-white/5 text-[#f1f5f9] hover:bg-white/10"
+        className="w-full border-white/10 bg-white/5 text-foreground hover:bg-white/10"
       >
         {isGooglePending && <Spinner />}
         Googleで登録
