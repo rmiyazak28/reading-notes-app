@@ -195,10 +195,10 @@ type RawBook = Omit<Book, "memoCount"> & {
  *   starCount は `favorite=true` に絞ったカウントが必要で、Supabase の集計構文はフィルタ付きカウントを
  *   同一クエリ内に直接記述できないため、別クエリで取得して Map に変換している。
  */
-export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Book[] | null; error: string | null }> {
+export async function getBooks(params: GetBooksParams = {}): Promise<ActionResult<Book[]>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: "UNAUTHORIZED" }
+  if (!user) return { data: null, error: { code: "UNAUTHORIZED", message: "認証が必要です" } }
 
   let booksQuery = supabase
     .from("books")
@@ -218,7 +218,7 @@ export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Boo
   }
 
   const { data: booksData, error: booksError } = await booksQuery
-  if (booksError) return { data: null, error: "処理に失敗しました" }
+  if (booksError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   if (!booksData || booksData.length === 0) return { data: [], error: null }
 
   // .in(bookIds) は書籍数分のUUIDをURLクエリに展開するため件数が増えると極端に低速になる。
