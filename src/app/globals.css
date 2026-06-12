@@ -91,9 +91,9 @@
   --color-lake-surface: var(--lake-surface);
   --color-lake-deep: var(--lake-deep);
   --color-amber-star: var(--amber-star);
-  --color-foreground-secondary: var(--foreground-secondary);
-  --color-foreground-dim: var(--foreground-dim);
-  --color-lake-accent: var(--lake-accent);
+  --color-foreground-secondary: oklch(0.83 0.012 230);
+  --color-foreground-dim: oklch(0.52 0.02 230);
+  --color-lake-accent: oklch(0.78 0.18 205);
 }
 
 @layer base {
