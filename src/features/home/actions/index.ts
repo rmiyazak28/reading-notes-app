@@ -117,9 +117,9 @@ export async function getHomeData(): Promise<ActionResult<HomeData>> {
       .eq("status", "reading"),
   ])
 
-  if (recentMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: recentMemosRes.error.message } }
-  if (favoriteMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: favoriteMemosRes.error.message } }
-  if (readingBooksRes.error) return { data: null, error: { code: "DB_ERROR", message: readingBooksRes.error.message } }
+  if (recentMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+  if (favoriteMemosRes.error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+  if (readingBooksRes.error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const starCountMap = new Map<string, number>()
   for (const row of starRes.data ?? []) {
