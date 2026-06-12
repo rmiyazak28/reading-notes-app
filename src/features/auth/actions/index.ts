@@ -179,6 +179,9 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
 
     const { error } = await supabase.auth.updateUser(updateData)
     if (error) {
+      if (password && error.message.toLowerCase().includes("different from the old password")) {
+        return { data: null, error: { code: "VALIDATION", message: "現在と異なるパスワードを入力してください" } }
+      }
       return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
     }
 
