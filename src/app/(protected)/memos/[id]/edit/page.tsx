@@ -35,7 +35,11 @@ export default async function Page({ params, searchParams }: Props) {
   if (bookResult.error?.code === "NOT_FOUND") redirect("/books")
   if (bookResult.error) throw new Error(bookResult.error.message)
 
-  const backTo = from === "memos" ? "/memos" : `/books/${memo.book_id}`
+  // from が "/memos" または "/books/" で始まる相対パスの場合はそのまま使用（検索条件を保持するため）
+  const decodedFrom = from ? decodeURIComponent(from) : ""
+  const backTo = decodedFrom.startsWith("/memos") || decodedFrom.startsWith("/books/")
+    ? decodedFrom
+    : `/books/${memo.book_id}`
 
   return (
     <MemoEditPage
