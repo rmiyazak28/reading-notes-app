@@ -70,7 +70,7 @@ export async function signUpWithEmail(input: SignUpInput): Promise<ActionResult<
   })
 
   if (error) {
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   return { data: undefined, error: null }
@@ -194,7 +194,7 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
 
     const { error } = await supabase.auth.updateUser(updateData)
     if (error) {
-      return { data: null, error: { code: "DB_ERROR", message: error.message } }
+      return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
     }
 
     // updateUser 後もクッキーの JWT クレームは古いままのため、
@@ -208,7 +208,7 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
   if (email) {
     const { error } = await supabase.auth.updateUser({ email })
     if (error) {
-      return { data: null, error: { code: "DB_ERROR", message: error.message } }
+      return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
     }
   }
 
@@ -239,7 +239,7 @@ export async function deleteAccount(): Promise<ActionResult<void>> {
 
   const { error } = await adminClient.auth.admin.deleteUser(user.id)
   if (error) {
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   await supabase.auth.signOut()

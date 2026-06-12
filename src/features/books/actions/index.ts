@@ -59,7 +59,7 @@ export async function createBook(input: CreateBookInput): Promise<ActionResult<B
     if (error.code === "23505") {
       return { data: null, error: { code: "VALIDATION", message: "同じタイトルの書籍がすでに登録されています" } }
     }
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   return {
@@ -100,7 +100,7 @@ export async function getBook(id: string): Promise<ActionResult<Book>> {
     if (error.code === "PGRST116") {
       return { data: null, error: { code: "NOT_FOUND", message: "書籍が見つかりません" } }
     }
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   const { data: starData } = await supabase
@@ -153,7 +153,7 @@ export async function updateBook(id: string, input: UpdateBookInput): Promise<Ac
     if (error.code === "23505") {
       return { data: null, error: { code: "VALIDATION", message: "同じタイトルの書籍がすでに登録されています" } }
     }
-    return { data: null, error: { code: "DB_ERROR", message: error.message } }
+    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   return { data: { ...data, memoCount: 0, starCount: 0 }, error: null }
@@ -169,7 +169,7 @@ export async function deleteBook(id: string): Promise<ActionResult<void>> {
     .delete()
     .eq("id", id)
 
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   return { data: undefined, error: null }
 }
@@ -226,7 +226,7 @@ export async function getBooks(params: GetBooksParams = {}): Promise<{ data: Boo
   }
 
   const { data: booksData, error: booksError } = await booksQuery
-  if (booksError) return { data: null, error: booksError.message }
+  if (booksError) return { data: null, error: "処理に失敗しました" }
   if (!booksData || booksData.length === 0) return { data: [], error: null }
 
   // .in(bookIds) は書籍数分のUUIDをURLクエリに展開するため件数が増えると極端に低速になる。
