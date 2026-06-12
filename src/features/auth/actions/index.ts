@@ -61,17 +61,15 @@ export async function signUpWithEmail(input: SignUpInput): Promise<ActionResult<
 
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signUp({
+  // ユーザー列挙防止: 登録済みメールアドレスでもエラーを返さない。
+  // Supabase は登録済みの場合、既存ユーザーへ別途通知メールを送信する。
+  await supabase.auth.signUp({
     email: input.email,
     password: input.password,
     options: {
       data: { name: input.name },
     },
   })
-
-  if (error) {
-    return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
-  }
 
   return { data: undefined, error: null }
 }

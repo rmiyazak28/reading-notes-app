@@ -72,11 +72,12 @@ describe("signUpWithEmail", () => {
     })
   })
 
-  describe("DBエラー", () => {
-    it("signUp が失敗した場合 DB_ERROR を返す", async () => {
-      mockSignUp.mockResolvedValue({ error: { message: "signup failed" } })
+  describe("ユーザー列挙防止", () => {
+    it("signUp が失敗しても成功を返す（登録済みメールアドレスを列挙させない）", async () => {
+      mockSignUp.mockResolvedValue({ error: { message: "User already registered" } })
       const result = await signUpWithEmail({ name: "テスト", email: "test@example.com", password: "pass1234" })
-      expect(result.error?.code).toBe("DB_ERROR")
+      expect(result.error).toBeNull()
+      expect(result.data).toBeUndefined()
     })
   })
 })
