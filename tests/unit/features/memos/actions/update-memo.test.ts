@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { updateMemo } from "@/features/memos/actions"
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
+
 const MEMO_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const TAG_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 const TAG_ID2 = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
