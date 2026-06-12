@@ -5,9 +5,10 @@ const USER_ID = "user-uuid-0001"
 
 // ── モック ────────────────────────────────────────────────────────────────────
 
-const { mockGetUser, mockUpdateUser, mockAdminDeleteUser, mockSignOut } = vi.hoisted(() => ({
+const { mockGetUser, mockUpdateUser, mockRefreshSession, mockAdminDeleteUser, mockSignOut } = vi.hoisted(() => ({
   mockGetUser: vi.fn(),
   mockUpdateUser: vi.fn(),
+  mockRefreshSession: vi.fn(),
   mockAdminDeleteUser: vi.fn(),
   mockSignOut: vi.fn(),
 }))
@@ -17,6 +18,7 @@ vi.mock("@/lib/supabase/server", () => ({
     auth: {
       getUser: mockGetUser,
       updateUser: mockUpdateUser,
+      refreshSession: mockRefreshSession,
       signOut: mockSignOut,
     },
   }),

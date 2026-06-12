@@ -178,25 +178,12 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
     }
   }
 
-  // email は Supabase の "Secure Email Change" フローが古いアドレスを検証して
-  // 失敗するケースがあるため、Admin API で直接更新する
+  // Secure Email Change: 新メールアドレスへ確認リンクを送信し、クリック後に変更が反映される
   if (email) {
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    if (!serviceRoleKey || !supabaseUrl) {
-      return { data: null, error: { code: "UNKNOWN", message: "サーバー設定が不正です" } }
-    }
-
-    const adminClient = createAdminClient(supabaseUrl, serviceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-
-    const { error } = await adminClient.auth.admin.updateUserById(user.id, { email })
+    const { error } = await supabase.auth.updateUser({ email })
     if (error) {
       return { data: null, error: { code: "DB_ERROR", message: error.message } }
     }
-
-    await supabase.auth.refreshSession()
   }
 
   return { data: undefined, error: null }
