@@ -16,11 +16,7 @@ type RawMemoWithBook = Omit<MemoWithBook, "tags" | "book_title" | "book_author">
 }
 
 type GetMemosParams = {
-  bookId?: string
-  query?: string
-  favoriteOnly?: boolean
-  limit?: number
-  offset?: number
+  bookId: string
 }
 
 export type SearchMemosParams = {
@@ -105,7 +101,7 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
 }
 
 export async function getMemos(params: GetMemosParams): Promise<ActionResult<MemoWithTags[]>> {
-  if (params.bookId !== undefined && !z.string().uuid().safeParse(params.bookId).success) {
+  if (!z.string().uuid().safeParse(params.bookId).success) {
     return { data: null, error: { code: "VALIDATION", message: "bookId が不正です" } }
   }
 
