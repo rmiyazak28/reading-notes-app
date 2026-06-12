@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, User, Home, BookOpen, FileText, Settings, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -68,10 +67,13 @@ export function NavigationDrawer({ userName, triggerClassName }: Props) {
           {navItems.map((item) => {
             const Icon = item.icon
             return (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false)
+                  // クローズアニメーション完了後に遷移してチラつきを防ぐ
+                  setTimeout(() => router.push(item.href), 150)
+                }}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                   isActive(item.href)
@@ -81,21 +83,23 @@ export function NavigationDrawer({ userName, triggerClassName }: Props) {
               >
                 <Icon className="h-5 w-5" />
                 {item.label}
-              </Link>
+              </button>
             )
           })}
         </nav>
 
         {/* 設定・ログアウト */}
         <div className="flex flex-col gap-1 border-t border-white/10 px-4 py-4">
-          <Link
-            href="/settings"
-            onClick={() => setIsOpen(false)}
+          <button
+            onClick={() => {
+              setIsOpen(false)
+              setTimeout(() => router.push("/settings"), 150)
+            }}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
           >
             <Settings className="h-5 w-5" />
             設定
-          </Link>
+          </button>
           <Button
             variant="ghost"
             onClick={handleSignOut}
