@@ -62,10 +62,11 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
   }
 
   // PostgREST の or() は結合テーブルのカラムを直接指定できないため、横断検索はクライアント側で行う。
-  // query がある場合は全件取得してからクライアントフィルタで絞る（rangeを外すと全件返る）。
+  // query がある場合は上限1000件で取得してからクライアントフィルタで絞る。
   // query がない場合はページネーション用に range を適用する。
+  const SEARCH_MAX = 1000
   const { data, error } = query && query.trim()
-    ? await builder
+    ? await builder.range(0, SEARCH_MAX - 1)
     : await builder.range(offset, offset + limit - 1)
 
   if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
