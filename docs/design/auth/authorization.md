@@ -248,7 +248,7 @@ USING (
 | ルール | 内容 |
 |---|---|
 | 保管場所 | `.env.local`（Vercel環境変数） |
-| 環境変数名 | `SUPABASE_SECRET_KEY` |
+| 環境変数名 | `SUPABASE_SERVICE_ROLE_KEY` |
 | 使用箇所 | Server Actions のみ（`deleteAccount` 限定） |
 | クライアント露出 | 禁止。`NEXT_PUBLIC_` プレフィックスを付与しない |
 | 取得場所 | Supabase ダッシュボード「Settings > API Keys」タブ |
