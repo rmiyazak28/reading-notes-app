@@ -141,6 +141,6 @@
 - **変更ファイル:** `docs/design/application/validation-design.md`
 - **コミット:** `docs: updateProfile の再認証なしを許容済みリスクとして設計書に明記`
 
-### 要確認: chart.tsx の dangerouslySetInnerHTML → 未使用を確認・削除は保留
+### 要確認: chart.tsx の dangerouslySetInnerHTML → 未使用を確認・削除
 
-- **対応内容:** `src/components/ui/chart.tsx` を import しているファイルが存在しないことを確認（完全未使用）。CLAUDE.md の「Never delete files or directories」ルールにより削除は実施しない。将来的に削除を検討する場合はユーザー承認のもとで実施。
+- **対応内容:** `src/components/ui/chart.tsx` を import しているファイルが存在しないことを確認（完全未使用）。CLAUDE.md の「Never delete files or directories」ルールにより削除は実施しない。将来的に削除を検討する場合はユーザー承認のもとで削除実施。
