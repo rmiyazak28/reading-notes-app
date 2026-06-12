@@ -82,7 +82,7 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
     ? await builder.range(0, SEARCH_MAX - 1)
     : await builder.range(offset, offset + limit - 1)
 
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const memos: MemoWithBook[] = (data as unknown as RawMemoWithBook[]).map(
     ({ memo_tags, books, ...rest }) => ({
@@ -132,7 +132,7 @@ export async function getMemos(params: GetMemosParams): Promise<ActionResult<Mem
     .eq("book_id", params.bookId)
     .order("created_at", { ascending: false })
 
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const memos: MemoWithTags[] = (data as unknown as RawMemo[]).map(({ memo_tags, ...rest }) => ({
     ...rest,
@@ -172,7 +172,7 @@ export async function toggleFavorite(id: string): Promise<ActionResult<{ favorit
     .select("favorite")
     .single()
 
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   return { data: { favorite: data.favorite }, error: null }
 }
@@ -191,7 +191,7 @@ export async function deleteMemo(id: string): Promise<ActionResult<void>> {
     .delete()
     .eq("id", id)
 
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   revalidatePath("/memos")
   return { data: undefined, error: null }
@@ -208,7 +208,7 @@ export async function getTags(): Promise<ActionResult<Tag[]>> {
     .eq("user_id", user.id)
     .order("name")
 
-  if (error) return { data: null, error: { code: "DB_ERROR", message: error.message } }
+  if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   return { data: data as Tag[], error: null }
 }
@@ -287,7 +287,7 @@ export async function updateMemo(id: string, input: UpdateMemoInput): Promise<Ac
     .select()
     .single()
 
-  if (memoError) return { data: null, error: { code: "DB_ERROR", message: memoError.message } }
+  if (memoError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const tags = parsed.data.tags ?? []
   const resolvedTagIds: string[] = []
@@ -305,7 +305,7 @@ export async function updateMemo(id: string, input: UpdateMemoInput): Promise<Ac
         .select("id, name")
         .single()
 
-      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: upsertError.message } }
+      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
       resolvedTagIds.push(upserted.id)
     }
   }
@@ -316,21 +316,21 @@ export async function updateMemo(id: string, input: UpdateMemoInput): Promise<Ac
     .delete()
     .eq("memo_id", id)
 
-  if (deleteError) return { data: null, error: { code: "DB_ERROR", message: deleteError.message } }
+  if (deleteError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   if (resolvedTagIds.length > 0) {
     const { error: tagError } = await supabase
       .from("memo_tags")
       .insert(resolvedTagIds.map(tag_id => ({ memo_id: id, tag_id })))
 
-    if (tagError) return { data: null, error: { code: "DB_ERROR", message: tagError.message } }
+    if (tagError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   const { data: resolvedTags, error: tagsError } = resolvedTagIds.length > 0
     ? await supabase.from("tags").select("id, name").in("id", resolvedTagIds)
     : { data: [], error: null }
 
-  if (tagsError) return { data: null, error: { code: "DB_ERROR", message: tagsError.message } }
+  if (tagsError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   revalidatePath("/memos")
   return {
@@ -382,7 +382,7 @@ export async function createMemo(input: CreateMemoInput): Promise<ActionResult<M
     .select()
     .single()
 
-  if (memoError) return { data: null, error: { code: "DB_ERROR", message: memoError.message } }
+  if (memoError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   const tags = parsed.data.tags ?? []
   const resolvedTagIds: string[] = []
@@ -401,7 +401,7 @@ export async function createMemo(input: CreateMemoInput): Promise<ActionResult<M
         .select("id, name")
         .single()
 
-      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: upsertError.message } }
+      if (upsertError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
       resolvedTagIds.push(upserted.id)
     }
   }
@@ -411,14 +411,14 @@ export async function createMemo(input: CreateMemoInput): Promise<ActionResult<M
       .from("memo_tags")
       .insert(resolvedTagIds.map(tag_id => ({ memo_id: memo.id, tag_id })))
 
-    if (tagError) return { data: null, error: { code: "DB_ERROR", message: tagError.message } }
+    if (tagError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
   }
 
   const { data: resolvedTags, error: tagsError } = resolvedTagIds.length > 0
     ? await supabase.from("tags").select("id, name").in("id", resolvedTagIds)
     : { data: [], error: null }
 
-  if (tagsError) return { data: null, error: { code: "DB_ERROR", message: tagsError.message } }
+  if (tagsError) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
   return {
     data: { ...memo, tags: (resolvedTags ?? []) as Tag[] },
