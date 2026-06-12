@@ -68,9 +68,13 @@ export function HomePage({ initialData }: Props) {
   const [favoriteMemos, setFavoriteMemos] = useState<HomeMemoWithBook[]>(initialData.favoriteMemos)
   const [readingBooks, setReadingBooks] = useState<Book[]>(initialData.readingBooks)
   const [favoriteMemoCount, setFavoriteMemoCount] = useState(initialData.summary.favoriteMemoCount)
+  const [totalBooks, setTotalBooks] = useState(initialData.summary.totalBooks)
+  const [readingBookCount, setReadingBookCount] = useState(initialData.summary.readingBookCount)
 
   const handleBookCreated = (newBook: Book) => {
+    setTotalBooks((c) => c + 1)
     if (newBook.status === "reading") {
+      setReadingBookCount((c) => c + 1)
       setReadingBooks((prev) => [newBook, ...prev].slice(0, HOME_LIMIT_DISPLAY))
     }
   }
@@ -207,7 +211,7 @@ export function HomePage({ initialData }: Props) {
         )}
 
         {/* サマリーバー（PC・スマホ共通） */}
-        <HomeSummaryBar summary={{ ...initialData.summary, favoriteMemoCount }} />
+        <HomeSummaryBar summary={{ ...initialData.summary, favoriteMemoCount, totalBooks, readingBookCount }} />
 
         {/*
           PC: 上段2カラム（読書中｜最近のメモ）＋下段全幅（お気に入りメモ）
