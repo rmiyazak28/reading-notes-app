@@ -1,7 +1,7 @@
 "use client"
 
 import { Star } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { MemoWithBook } from "@/features/memos/types"
 
 interface MemoSearchCardProps {
@@ -21,11 +21,16 @@ function formatDate(dateStr: string): string {
 
 function MemoSearchCard({ memo, togglingIds, sortBy, onToggleFavorite }: MemoSearchCardProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   return (
     <div
       className="glass rounded-lg p-4 cursor-pointer glass-hover"
-      onClick={() => router.push(`/memos/${memo.id}/edit?from=memos`)}
+      onClick={() => {
+        const currentSearch = searchParams.toString()
+        const backPath = currentSearch ? `/memos?${currentSearch}` : "/memos"
+        router.push(`/memos/${memo.id}/edit?from=${encodeURIComponent(backPath)}`)
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs text-[#94a3b8] truncate flex-1">{memo.book_title}</p>

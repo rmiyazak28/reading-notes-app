@@ -4,14 +4,13 @@ import { Header } from "@/components/layout/header"
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data } = await supabase.auth.getClaims()
-  const claims = data?.claims
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!claims) {
+  if (!user) {
     redirect("/login")
   }
 
-  const userName = (claims.user_metadata?.name as string | undefined) ?? claims.email ?? ""
+  const userName = (user.user_metadata?.name as string | undefined) ?? ""
 
   return (
     <>

@@ -34,3 +34,6 @@ tests/e2e/results/
 tests/.auth/
 playwright-report/
 playwright/.cache/
+
+# .gitkeep（空ディレクトリ管理用プレースホルダー）
+**/.gitkeep
