@@ -171,33 +171,37 @@ export async function updateProfile(input: UpdateProfileInput): Promise<ActionRe
 
   const { name, email, password } = parsed.data
 
-  // email 以外（name / password）は通常の updateUser で更新する
-  if (name !== undefined || password) {
-    const updateData: Parameters<typeof supabase.auth.updateUser>[0] = {}
-    if (name !== undefined) updateData.data = { name }
-    if (password) updateData.password = password
+  try {
+    // email 以外（name / password）は通常の updateUser で更新する
+    if (name !== undefined || password) {
+      const updateData: Parameters<typeof supabase.auth.updateUser>[0] = {}
+      if (name !== undefined) updateData.data = { name }
+      if (password) updateData.password = password
 
-    const { error } = await supabase.auth.updateUser(updateData)
-    if (error) {
-      if (password && error.message.toLowerCase().includes("different from the old password")) {
-        return { data: null, error: { code: "VALIDATION", message: "現在と異なるパスワードを入力してください" } }
+      const { error } = await supabase.auth.updateUser(updateData)
+      if (error) {
+        if (password && error.message.toLowerCase().includes("different from the old password")) {
+          return { data: null, error: { code: "VALIDATION", message: "現在と異なるパスワードを入力してください" } }
+        }
+        return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
       }
-      return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+
+      // updateUser 後もクッキーの JWT クレームは古いままのため、
+      // セッションを再取得してクッキーを最新の user_metadata で上書きする
+      if (name !== undefined) {
+        await supabase.auth.refreshSession()
+      }
     }
 
-    // updateUser 後もクッキーの JWT クレームは古いままのため、
-    // セッションを再取得してクッキーを最新の user_metadata で上書きする
-    if (name !== undefined) {
-      await supabase.auth.refreshSession()
+    // Secure Email Change: 新メールアドレスへ確認リンクを送信し、クリック後に変更が反映される
+    if (email) {
+      const { error } = await supabase.auth.updateUser({ email })
+      if (error) {
+        return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
+      }
     }
-  }
-
-  // Secure Email Change: 新メールアドレスへ確認リンクを送信し、クリック後に変更が反映される
-  if (email) {
-    const { error } = await supabase.auth.updateUser({ email })
-    if (error) {
-      return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
-    }
+  } catch {
+    return { data: null, error: { code: "UNKNOWN", message: "処理に失敗しました" } }
   }
 
   return { data: undefined, error: null }
