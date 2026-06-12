@@ -3,16 +3,8 @@
 import { z } from "zod"
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import type { ActionResult } from "@/types/actions"
 import type { MemoWithTags, MemoWithBook, Tag } from "@/features/memos/types"
-
-type ActionError = {
-  code: "UNAUTHORIZED" | "VALIDATION" | "NOT_FOUND" | "DB_ERROR" | "UNKNOWN"
-  message: string
-}
-
-type ActionResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: ActionError }
 
 type RawMemo = Omit<MemoWithTags, "tags"> & {
   memo_tags: { tags: { id: string; name: string } | null }[]

@@ -1,20 +1,12 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import type { ActionResult } from "@/types/actions"
 import type { Book } from "@/features/books/types"
 import type { MemoWithTags, Tag } from "@/features/memos/types"
 
 const HOME_LIMIT = 5
 const FAVORITE_LIMIT = 10
-
-type ActionError = {
-  code: "UNAUTHORIZED" | "DB_ERROR"
-  message: string
-}
-
-type ActionResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: ActionError }
 
 export type HomeMemoWithBook = MemoWithTags & {
   book: { id: string; title: string }

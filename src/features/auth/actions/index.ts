@@ -3,20 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { z } from "zod"
-
-/** Server Actions が返す統一エラー型 */
-type ActionError = {
-  code: "UNAUTHORIZED" | "VALIDATION" | "DB_ERROR" | "UNKNOWN"
-  message: string
-}
-
-/**
- * Server Actions の統一戻り値型。
- * 成功時は data に結果、error は null。失敗時はその逆。
- */
-type ActionResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: ActionError }
+import type { ActionResult } from "@/types/actions"
 
 /** {@link signUpWithEmail} の入力型 */
 type SignUpInput = {

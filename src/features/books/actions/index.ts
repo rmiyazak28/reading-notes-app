@@ -2,16 +2,8 @@
 
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
+import type { ActionResult } from "@/types/actions"
 import type { Book, ReadingStatus } from "@/features/books/types"
-
-type ActionError = {
-  code: "UNAUTHORIZED" | "VALIDATION" | "NOT_FOUND" | "DB_ERROR" | "UNKNOWN"
-  message: string
-}
-
-type ActionResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: ActionError }
 
 type CreateBookInput = {
   title: string
