@@ -11,12 +11,12 @@ interface StatCardProps {
 function StatCard({ icon, label, value, unit }: StatCardProps) {
   return (
     <div className="glass rounded-lg px-4 py-3 flex items-center gap-3 flex-1 min-w-0">
-      <div className="shrink-0 text-[#94a3b8]">{icon}</div>
+      <div className="shrink-0 text-muted-foreground">{icon}</div>
       <div className="min-w-0">
-        <p className="text-xs text-[#94a3b8] truncate">{label}</p>
-        <p className="text-lg font-semibold text-[#f1f5f9] leading-tight">
+        <p className="text-xs text-muted-foreground truncate">{label}</p>
+        <p className="text-lg font-semibold text-foreground leading-tight">
           {value.toLocaleString()}
-          <span className="text-xs font-normal text-[#94a3b8] ml-0.5">{unit}</span>
+          <span className="text-xs font-normal text-muted-foreground ml-0.5">{unit}</span>
         </p>
       </div>
     </div>

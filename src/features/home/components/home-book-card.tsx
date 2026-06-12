@@ -24,12 +24,12 @@ export function HomeBookCard({ book }: HomeBookCardProps) {
       onClick={() => router.push(`/books/${book.id}`)}
       className="glass glass-hover rounded-lg p-4 cursor-pointer flex-shrink-0 w-52 flex flex-col gap-2"
     >
-      <p className="font-medium text-[#f1f5f9] text-sm line-clamp-2 leading-snug">{book.title}</p>
+      <p className="font-medium text-foreground text-sm line-clamp-2 leading-snug">{book.title}</p>
       {book.author && (
-        <p className="text-xs text-[#94a3b8] truncate">{book.author}</p>
+        <p className="text-xs text-muted-foreground truncate">{book.author}</p>
       )}
       <StatusBadge status={book.status} />
-      <div className="flex items-center gap-3 text-xs text-[#94a3b8] mt-auto pt-1">
+      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-auto pt-1">
         <span className="flex items-center gap-1">
           <FileText className="h-3 w-3" />
           {book.memoCount ?? 0}

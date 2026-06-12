@@ -130,7 +130,7 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* ページ数 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-page-number">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-page-number">
                 ページ数
               </label>
               <Input
@@ -148,7 +148,7 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
 
             {/* メモ内容 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-content">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-content">
                 メモ内容 <span className="text-destructive">*</span>
               </label>
               <Textarea
@@ -165,7 +165,7 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
 
             {/* タグ */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]">タグ</label>
+              <label className="text-sm text-foreground-secondary">タグ</label>
               <Controller
                 control={control}
                 name="tags"
@@ -188,11 +188,11 @@ export function MemoEditModal({ memo, open, onOpenChange, onSuccess, onDelete, t
                   type="button"
                   onClick={() => field.onChange(!field.value)}
                   aria-label="お気に入り切替"
-                  className="flex items-center gap-2 text-sm text-[#cbd5e1] hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors"
                 >
                   <Star
                     className={`h-4 w-4 transition-colors ${
-                      watchFavorite ? "text-amber-400 fill-amber-400" : "text-[#64748b]"
+                      watchFavorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim"
                     }`}
                   />
                   お気に入りに追加

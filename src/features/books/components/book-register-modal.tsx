@@ -105,7 +105,7 @@ export function BookRegisterModal({ open, onOpenChange, onSuccess }: Props) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* タイトル */}
           <div className="space-y-1.5">
-            <label className="text-sm text-[#cbd5e1]" htmlFor="title">
+            <label className="text-sm text-foreground-secondary" htmlFor="title">
               タイトル <span className="text-destructive">*</span>
             </label>
             <Input
@@ -121,7 +121,7 @@ export function BookRegisterModal({ open, onOpenChange, onSuccess }: Props) {
 
           {/* 著者 */}
           <div className="space-y-1.5">
-            <label className="text-sm text-[#cbd5e1]" htmlFor="author">
+            <label className="text-sm text-foreground-secondary" htmlFor="author">
               著者
             </label>
             <Input
@@ -137,7 +137,7 @@ export function BookRegisterModal({ open, onOpenChange, onSuccess }: Props) {
 
           {/* ジャンル */}
           <div className="space-y-1.5">
-            <label className="text-sm text-[#cbd5e1]" htmlFor="genre">
+            <label className="text-sm text-foreground-secondary" htmlFor="genre">
               ジャンル
             </label>
             <Input
@@ -153,7 +153,7 @@ export function BookRegisterModal({ open, onOpenChange, onSuccess }: Props) {
 
           {/* 読書状態 */}
           <div className="space-y-1.5">
-            <label className="text-sm text-[#cbd5e1]">読書状態</label>
+            <label className="text-sm text-foreground-secondary">読書状態</label>
             <Controller
               control={control}
               name="status"

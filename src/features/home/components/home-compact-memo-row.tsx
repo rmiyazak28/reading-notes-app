@@ -32,21 +32,21 @@ export function HomeCompactMemoRow({ memo, onEdit, onFavoriteClick, isPending, m
         <Link
           href={`/books/${memo.book.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="text-[10px] text-[#64748b] hover:text-[#94a3b8] truncate transition-colors"
+          className="text-[10px] text-foreground-dim hover:text-muted-foreground truncate transition-colors"
         >
           {memo.book.title}
         </Link>
-        <span className="shrink-0 text-[10px] text-[#64748b]">{formatDate(memo.created_at)}</span>
+        <span className="shrink-0 text-[10px] text-foreground-dim">{formatDate(memo.created_at)}</span>
       </div>
 
       {/* メモ内容・タグ・お気に入り */}
       <div className={`flex gap-2 ${multiLine ? "items-start" : "items-center"}`}>
-        <p className={`flex-1 min-w-0 text-sm text-[#f1f5f9] ${multiLine ? "line-clamp-3" : "truncate"}`}>{memo.content}</p>
+        <p className={`flex-1 min-w-0 text-sm text-foreground ${multiLine ? "line-clamp-3" : "truncate"}`}>{memo.content}</p>
 
         {/* タグ（最大2件） */}
         <div className="shrink-0 flex items-center gap-1">
           {memo.tags.slice(0, 2).map((tag) => (
-            <span key={tag.id} className="text-xs bg-white/10 text-[#94a3b8] px-1.5 py-0.5 rounded">
+            <span key={tag.id} className="text-xs bg-white/10 text-muted-foreground px-1.5 py-0.5 rounded">
               #{tag.name}
             </span>
           ))}
@@ -60,7 +60,7 @@ export function HomeCompactMemoRow({ memo, onEdit, onFavoriteClick, isPending, m
           aria-label={memo.favorite ? "お気に入り解除" : "お気に入りに追加"}
         >
           <Star
-            className={`h-3.5 w-3.5 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-[#64748b]"}`}
+            className={`h-3.5 w-3.5 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim"}`}
           />
         </button>
       </div>

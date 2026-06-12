@@ -33,13 +33,13 @@ interface SectionHeaderProps {
 function SectionHeader({ title, icon, linkHref, linkLabel }: SectionHeaderProps) {
   return (
     <div className="flex items-center justify-between">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-[#f1f5f9]">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         {icon}
         {title}
       </h2>
       <Link
         href={linkHref}
-        className="flex items-center gap-0.5 text-xs text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
+        className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         {linkLabel}
         <ChevronRight className="h-3 w-3" />
@@ -50,7 +50,7 @@ function SectionHeader({ title, icon, linkHref, linkLabel }: SectionHeaderProps)
 
 function EmptyCard({ message }: { message: string }) {
   return (
-    <div className="glass rounded-lg p-5 text-center text-[#94a3b8] text-xs">
+    <div className="glass rounded-lg p-5 text-center text-muted-foreground text-xs">
       {message}
     </div>
   )
@@ -224,7 +224,7 @@ export function HomePage({ initialData }: Props) {
           <section className="order-3 md:order-1 flex flex-col gap-3">
             <SectionHeader
               title="読書中"
-              icon={<BookMarked className="h-3.5 w-3.5 text-[#94a3b8]" />}
+              icon={<BookMarked className="h-3.5 w-3.5 text-muted-foreground" />}
               linkHref="/books?status=reading"
               linkLabel="一覧を見る"
             />
@@ -243,7 +243,7 @@ export function HomePage({ initialData }: Props) {
           <section className="order-1 md:order-2 flex flex-col gap-3">
             <SectionHeader
               title="最近のメモ"
-              icon={<BookOpen className="h-3.5 w-3.5 text-[#94a3b8]" />}
+              icon={<BookOpen className="h-3.5 w-3.5 text-muted-foreground" />}
               linkHref="/memos"
               linkLabel="全メモ検索"
             />

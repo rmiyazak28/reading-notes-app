@@ -60,7 +60,7 @@ type PasswordValues = z.infer<typeof passwordSchema>
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="glass rounded-xl border border-white/10 p-6 space-y-4">
-      <h2 className="text-sm font-semibold text-[#f1f5f9]">{title}</h2>
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       {children}
     </section>
   )
@@ -265,7 +265,7 @@ export function SettingsPage({ userName, userEmail }: Props) {
             variant="outline"
             onClick={handleSignOut}
             disabled={isSignOutPending}
-            className="w-full glass border-white/10 text-[#94a3b8] hover:text-[#f1f5f9] hover:border-white/20"
+            className="w-full glass border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
           >
             {isSignOutPending ? <Spinner className="h-4 w-4" /> : "ログアウト"}
           </Button>

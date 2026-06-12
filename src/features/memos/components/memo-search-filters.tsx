@@ -47,7 +47,7 @@ export function MemoSearchFilters({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
               favoriteOnly
                 ? "bg-amber-400/20 border-amber-400/40 text-amber-300"
-                : "glass border-white/10 text-[#94a3b8] hover:text-[#f1f5f9] hover:border-white/20"
+                : "glass border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
             }`}
             aria-pressed={favoriteOnly}
           >
@@ -57,7 +57,7 @@ export function MemoSearchFilters({
 
           {/* ソート */}
           <Select value={sortBy} onValueChange={(v) => onSortByChange(v as "created_at" | "updated_at")}>
-            <SelectTrigger className="w-fit glass border-white/10 bg-white/5 text-[#94a3b8] text-xs h-8 gap-1.5">
+            <SelectTrigger className="w-fit glass border-white/10 bg-white/5 text-muted-foreground text-xs h-8 gap-1.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="glass bg-slate-900/95 border-white/10">
@@ -75,8 +75,8 @@ export function MemoSearchFilters({
       {/* SCR-04・SCR-05に合わせて件数をstickyエリア内の検索バー下に表示 */}
       <div className="mt-2">
         <span className="text-sm">
-          <span className="text-[#22d3ee] font-medium">{totalCount}</span>
-          <span className="text-[#cbd5e1]"> 件</span>
+          <span className="text-lake-accent font-medium">{totalCount}</span>
+          <span className="text-foreground-secondary"> 件</span>
         </span>
       </div>
     </div>

@@ -117,12 +117,12 @@ export function MemoEditPage({ memo, book, tagSuggestions, backTo }: Props) {
         </div>
 
         <main className="container mx-auto px-4 pt-24 pb-8">
-          <p className="text-xs text-[#94a3b8] mb-6 truncate">{book.title}</p>
+          <p className="text-xs text-muted-foreground mb-6 truncate">{book.title}</p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             {/* ページ数 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-page-number">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-page-number">
                 ページ数
               </label>
               <Input
@@ -140,7 +140,7 @@ export function MemoEditPage({ memo, book, tagSuggestions, backTo }: Props) {
 
             {/* メモ内容 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-content">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-content">
                 メモ内容 <span className="text-destructive">*</span>
               </label>
               <Textarea
@@ -157,7 +157,7 @@ export function MemoEditPage({ memo, book, tagSuggestions, backTo }: Props) {
 
             {/* タグ */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]">タグ</label>
+              <label className="text-sm text-foreground-secondary">タグ</label>
               <Controller
                 control={control}
                 name="tags"
@@ -180,11 +180,11 @@ export function MemoEditPage({ memo, book, tagSuggestions, backTo }: Props) {
                   type="button"
                   onClick={() => field.onChange(!field.value)}
                   aria-label="お気に入り切替"
-                  className="flex items-center gap-2 text-sm text-[#cbd5e1] hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors"
                 >
                   <Star
                     className={`h-4 w-4 transition-colors ${
-                      watchFavorite ? "text-amber-400 fill-amber-400" : "text-[#64748b]"
+                      watchFavorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim"
                     }`}
                   />
                   お気に入りに追加

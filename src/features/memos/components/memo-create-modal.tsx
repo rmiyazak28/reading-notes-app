@@ -93,7 +93,7 @@ export function MemoCreateModal({ bookId, open, onOpenChange, onSuccess, tagSugg
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {/* ページ数 */}
           <div className="space-y-1.5">
-            <label className="text-sm text-[#cbd5e1]" htmlFor="create-page-number">
+            <label className="text-sm text-foreground-secondary" htmlFor="create-page-number">
               ページ数
             </label>
             <Input
@@ -111,7 +111,7 @@ export function MemoCreateModal({ bookId, open, onOpenChange, onSuccess, tagSugg
 
           {/* メモ内容 */}
           <div className="space-y-1.5">
-            <label className="text-sm text-[#cbd5e1]" htmlFor="create-content">
+            <label className="text-sm text-foreground-secondary" htmlFor="create-content">
               メモ内容 <span className="text-destructive">*</span>
             </label>
             <Textarea
@@ -128,7 +128,7 @@ export function MemoCreateModal({ bookId, open, onOpenChange, onSuccess, tagSugg
 
           {/* タグ */}
           <div className="space-y-1.5">
-            <label className="text-sm text-[#cbd5e1]">タグ</label>
+            <label className="text-sm text-foreground-secondary">タグ</label>
             <Controller
               control={control}
               name="tags"
@@ -150,11 +150,11 @@ export function MemoCreateModal({ bookId, open, onOpenChange, onSuccess, tagSugg
               <button
                 type="button"
                 onClick={() => field.onChange(!field.value)}
-                className="flex items-center gap-2 text-sm text-[#cbd5e1] hover:text-foreground transition-colors"
+                className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors"
               >
                 <Star
                   className={`h-4 w-4 transition-colors ${
-                    watchFavorite ? "text-amber-400 fill-amber-400" : "text-[#64748b]"
+                    watchFavorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim"
                   }`}
                 />
                 お気に入りに追加

@@ -64,8 +64,8 @@ return (
           {/* Book count */}
           <div className="mt-2">
             <span className="text-sm">
-              <span className="text-[#22d3ee] font-medium">{filteredBooks.length}</span>
-              <span className="text-[#cbd5e1]"> 冊</span>
+              <span className="text-lake-accent font-medium">{filteredBooks.length}</span>
+              <span className="text-foreground-secondary"> 冊</span>
             </span>
           </div>
         </div>

@@ -146,7 +146,7 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* タイトル */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-title">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-title">
                 タイトル <span className="text-destructive">*</span>
               </label>
               <Input
@@ -161,7 +161,7 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
 
             {/* 著者 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-author">著者</label>
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-author">著者</label>
               <Input
                 id="edit-author"
                 className="glass border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:bg-white/10 focus:border-primary/50 transition-colors"
@@ -174,7 +174,7 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
 
             {/* ジャンル */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-genre">ジャンル</label>
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-genre">ジャンル</label>
               <Input
                 id="edit-genre"
                 className="glass border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:bg-white/10 focus:border-primary/50 transition-colors"
@@ -187,7 +187,7 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
 
             {/* 読書状態 */}
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]">読書状態</label>
+              <label className="text-sm text-foreground-secondary">読書状態</label>
               <Controller
                 control={control}
                 name="status"
@@ -209,7 +209,7 @@ export function BookEditModal({ book, open, onOpenChange, onSuccess, onDelete }:
             {/* 読了日：読書状態が「読了」の場合のみ表示 */}
             {watchStatus === "completed" && (
             <div className="space-y-1.5">
-              <label className="text-sm text-[#cbd5e1]" htmlFor="edit-completed-at">
+              <label className="text-sm text-foreground-secondary" htmlFor="edit-completed-at">
                 読了日 <span className="text-destructive">*</span>
               </label>
               <input

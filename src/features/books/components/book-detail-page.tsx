@@ -155,12 +155,12 @@ export function BookDetailPage({ initialBook, initialMemos, initialTags, userNam
 
       <main className="container mx-auto px-4 py-6">
         {/* PC パンくずリスト */}
-        <nav className="hidden md:flex items-center gap-1.5 text-sm text-[#94a3b8] mb-4">
+        <nav className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
           <Link href="/books" className="hover:text-foreground transition-colors">
             書籍一覧
           </Link>
           <ChevronRight className="h-4 w-4 shrink-0" />
-          <span className="text-[#f1f5f9] truncate max-w-xs">{book.title}</span>
+          <span className="text-foreground truncate max-w-xs">{book.title}</span>
         </nav>
 
         {/* 書籍ヘッダー */}
@@ -187,8 +187,8 @@ export function BookDetailPage({ initialBook, initialMemos, initialTags, userNam
           </div>
           <div className="mt-2">
             <span className="text-sm">
-              <span className="text-[#22d3ee] font-medium">{filteredMemos.length}</span>
-              <span className="text-[#cbd5e1]"> 件</span>
+              <span className="text-lake-accent font-medium">{filteredMemos.length}</span>
+              <span className="text-foreground-secondary"> 件</span>
             </span>
           </div>
         </div>

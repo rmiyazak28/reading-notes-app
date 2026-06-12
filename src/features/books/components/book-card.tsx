@@ -27,10 +27,10 @@ export function BookCard({ book }: BookCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[#f1f5f9] line-clamp-2">
+          <h3 className="font-medium text-foreground line-clamp-2">
             {book.title}
           </h3>
-          <p className="text-sm text-[#cbd5e1] mt-0.5">
+          <p className="text-sm text-foreground-secondary mt-0.5">
             {book.author}
           </p>
         </div>
@@ -38,19 +38,19 @@ export function BookCard({ book }: BookCardProps) {
       </div>
 
       <div className="flex items-center gap-4 mt-3 text-sm">
-        <span className="text-[#cbd5e1]">{book.genre}</span>
-        <div className="flex items-center gap-1 text-[#cbd5e1]">
+        <span className="text-foreground-secondary">{book.genre}</span>
+        <div className="flex items-center gap-1 text-foreground-secondary">
           <FileText className="h-3.5 w-3.5" />
           <span>{book.memoCount}</span>
         </div>
       </div>
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/15">
-        <div className="flex items-center gap-1 text-[#cbd5e1]">
+        <div className="flex items-center gap-1 text-foreground-secondary">
           <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
           <span>{book.starCount}</span>
         </div>
-        <span className="text-xs text-[#cbd5e1]">
+        <span className="text-xs text-foreground-secondary">
           {formatDate(book.updated_at)}
         </span>
       </div>

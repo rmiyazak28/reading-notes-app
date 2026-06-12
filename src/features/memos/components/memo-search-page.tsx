@@ -219,7 +219,7 @@ export function MemoSearchPage({
               variant="outline"
               onClick={handleLoadMore}
               disabled={isLoadingMore}
-              className="glass border-white/10 text-[#94a3b8] hover:text-[#f1f5f9] hover:border-white/20"
+              className="glass border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
             >
               {isLoadingMore ? "読み込み中..." : "さらに読み込む"}
             </Button>

@@ -42,7 +42,7 @@ function MemoCard({ memo, onEdit, isPending, onFavoriteClick, onDeleteClick }: M
       onClick={() => onEdit?.(memo)}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs text-[#94a3b8]">
+        <span className="text-xs text-muted-foreground">
           {memo.page_number != null ? `p.${memo.page_number}` : ""}
         </span>
         <button
@@ -52,17 +52,17 @@ function MemoCard({ memo, onEdit, isPending, onFavoriteClick, onDeleteClick }: M
           aria-label={memo.favorite ? "お気に入り解除" : "お気に入りに追加"}
         >
           <Star
-            className={`h-4 w-4 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-[#64748b]"}`}
+            className={`h-4 w-4 ${memo.favorite ? "text-amber-400 fill-amber-400" : "text-foreground-dim"}`}
           />
         </button>
       </div>
 
-      <p className="text-[#f1f5f9] text-sm mt-2 line-clamp-3">{memo.content}</p>
+      <p className="text-foreground text-sm mt-2 line-clamp-3">{memo.content}</p>
 
       {memo.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {memo.tags.map(tag => (
-            <span key={tag.id} className="text-xs bg-white/10 text-[#cbd5e1] px-1.5 py-0.5 rounded">
+            <span key={tag.id} className="text-xs bg-white/10 text-foreground-secondary px-1.5 py-0.5 rounded">
               #{tag.name}
             </span>
           ))}
@@ -70,12 +70,12 @@ function MemoCard({ memo, onEdit, isPending, onFavoriteClick, onDeleteClick }: M
       )}
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-        <span className="text-xs text-[#94a3b8]">{formatDate(memo.created_at)}</span>
+        <span className="text-xs text-muted-foreground">{formatDate(memo.created_at)}</span>
         <Button
           variant="ghost"
           size="icon"
           onClick={(e) => { e.stopPropagation(); onDeleteClick() }}
-          className="h-7 w-7 text-[#64748b] hover:text-destructive hover:bg-destructive/10"
+          className="h-7 w-7 text-foreground-dim hover:text-destructive hover:bg-destructive/10"
           aria-label="メモを削除"
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -124,7 +124,7 @@ export function MemoCardList({ memos, onToggleFavorite, onDelete, onEdit }: Memo
 
   if (memos.length === 0) {
     return (
-      <div className="glass rounded-lg p-8 text-center text-[#94a3b8]">
+      <div className="glass rounded-lg p-8 text-center text-muted-foreground">
         メモはまだありません
       </div>
     )
