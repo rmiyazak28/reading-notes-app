@@ -1,0 +1,7 @@
+# .betterleaks.toml
+prefilter = '''
+matchesAny(attributes[?"path"].orValue(""), [
+  r"""(?:^|/)\.next(?:/.*)?$""",
+  r"""(?:^|/)\.env.*$"""
+])
+'''

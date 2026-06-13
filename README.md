@@ -180,6 +180,42 @@ src/
 
 ---
 
+## 品質・セキュリティチェック
+
+### Claude Fable 5 によるレビュー
+
+[Claude Fable 5](https://www.anthropic.com/)（2026年6月9日リリース）を用いて、設計書と実装の突合によるセキュリティチェック・コードレビューを実施。検出された指摘事項への修正対応・リグレッションテストは実施済み。
+
+- [セキュリティチェック結果](docs/check/security-check.md)
+- [コードレビュー結果](docs/check/code-review.md)
+- [リファクタリング計画](docs/check/refactoring-plan.md)
+
+### Semgrep
+
+リリース前に [Semgrep](https://semgrep.dev/) OSS による静的解析を実施しています。
+
+```bash
+semgrep scan --config auto
+```
+
+結果：213ルールに対し検出 0件。
+
+### Betterleaks
+
+[Betterleaks](https://github.com/betterleaks/betterleaks) を使用してシークレットスキャンを実施しています。
+
+```bash
+betterleaks dir .
+betterleaks git .
+```
+
+- `dir`: ワーキングツリー全体をスキャン
+- `git`: コミット履歴全体をスキャン
+
+結果：いずれも検出 0件。
+
+---
+
 ## テスト方針
 
 ### テスト種別と方針
