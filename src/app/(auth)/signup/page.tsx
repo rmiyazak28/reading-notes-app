@@ -12,6 +12,10 @@ export default function SignupPage() {
           <p className="text-sm text-foreground-secondary">アカウントを作成する</p>
         </div>
 
+        <p className="text-sm text-center text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          現在、新規登録は受け付けていません。
+        </p>
+
         <SignupForm />
 
         <p className="text-center text-sm text-foreground-secondary">
