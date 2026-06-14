@@ -2,6 +2,7 @@
 
 import { useTransition } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import {
   Home,
@@ -53,6 +54,7 @@ export function Header({ userName }: HeaderProps) {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/home" className="flex items-center gap-2">
+          <Image src="/icon-192.png" alt="memoLake logo" width={32} height={32} className="rounded-lg" />
           <span className="font-serif text-2xl font-semibold text-foreground tracking-tight">
             memoLake
           </span>
