@@ -1,0 +1,23 @@
+{
+  "name": "memoLake",
+  "short_name": "memoLake",
+  "description": "思考・引用・感想を湖のように蓄積する読書記録アプリ",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#0d1b2e",
+  "theme_color": "#0d1b2e",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

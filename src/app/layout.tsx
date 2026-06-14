@@ -13,7 +13,11 @@ const sourceSerif = Source_Serif_4({ subsets: ["latin"], variable: "--font-sourc
 export const metadata: Metadata = {
   title: 'memoLake - 読書記録管理',
   description: '思考・引用・感想を湖のように蓄積する、静かで集中できる個人用読書記録アプリ',
-  icons: { /* アイコン設定はそのまま */ }
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/icon-192.png',
+  },
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
