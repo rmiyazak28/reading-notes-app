@@ -24,7 +24,7 @@ npm run lint     # Run ESLint
 | Auth / DB | Supabase Authentication + PostgreSQL |
 | Server logic | Server Actions (no REST API routes except `/api/auth/callback`) |
 | Hosting | Vercel |
-| PWA | next-pwa (planned) |
+| PWA | next-pwa |
 
 ## Architecture
 
@@ -51,10 +51,10 @@ src/
 │   └── supabase/
 │       ├── client.ts   # Browser / Client Component
 │       ├── server.ts   # Server Components / Server Actions
-│       └── proxy.ts    # Session refresh in Next.js Middleware
+│       └── proxy.ts    # Session refresh in Proxy (Next.js 16 規約)
 ├── hooks/
 ├── types/
-└── middleware.ts
+└── proxy.ts
 tests/
 ├── unit/   # vitest unit tests
 └── e2e/    # Playwright e2e tests
@@ -140,7 +140,7 @@ All build errors, type errors, and test failures may be fixed autonomously in a 
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=   # Server-side only; never use NEXT_PUBLIC_ prefix
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
