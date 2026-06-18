@@ -10,9 +10,8 @@ type RawMemo = Omit<MemoWithTags, "tags"> & {
   memo_tags: { tags: { id: string; name: string } | null }[]
 }
 
-type RawMemoWithBook = Omit<MemoWithBook, "tags" | "book_title" | "book_author"> & {
-  memo_tags: { tags: { id: string; name: string } | null }[]
-  books: { title: string; author: string | null }
+type RpcMemoResult = Omit<MemoWithBook, "tags"> & {
+  tags: { id: string; name: string }[] | null
 }
 
 type GetMemosParams = {
@@ -47,55 +46,21 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
 
   const { query, favoriteOnly, sortBy = "created_at", limit = 50, offset = 0 } = parsed.data
 
-  let builder = supabase
-    .from("reading_memos")
-    .select(`
-      *,
-      memo_tags (
-        tags (id, name)
-      ),
-      books (title, author)
-    `)
-    .order(sortBy, { ascending: false })
-
-  if (favoriteOnly) {
-    builder = builder.eq("favorite", true)
-  }
-
-  // PostgREST の or() は結合テーブルのカラムを直接指定できないため、横断検索はクライアント側で行う。
-  // query がある場合は上限1000件で取得してからクライアントフィルタで絞る。
-  // query がない場合はページネーション用に range を適用する。
-  const SEARCH_MAX = 1000
-  const { data, error } = query && query.trim()
-    ? await builder.range(0, SEARCH_MAX - 1)
-    : await builder.range(offset, offset + limit - 1)
+  const { data, error } = await supabase.rpc("search_memos", {
+    p_user_id: user.id,
+    p_query: query && query.trim() ? query.trim() : null,
+    p_favorite_only: favoriteOnly ?? false,
+    p_sort_by: sortBy,
+    p_limit: limit,
+    p_offset: offset,
+  })
 
   if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
-  const memos: MemoWithBook[] = (data as unknown as RawMemoWithBook[]).map(
-    ({ memo_tags, books, ...rest }) => ({
-      ...rest,
-      book_title: books?.title ?? "",
-      book_author: books?.author ?? null,
-      tags: memo_tags
-        .filter((mt): mt is { tags: Tag } => mt.tags !== null)
-        .map(mt => mt.tags),
-    })
-  )
-
-  // タグ名での絞り込みはDB側ORでは難しいため、クエリがある場合はクライアント側で補完フィルタする
-  if (query && query.trim()) {
-    const q = query.trim().toLowerCase()
-    return {
-      data: memos.filter(m =>
-        m.content.toLowerCase().includes(q) ||
-        m.book_title.toLowerCase().includes(q) ||
-        (m.book_author?.toLowerCase().includes(q) ?? false) ||
-        m.tags.some(t => t.name.toLowerCase().includes(q))
-      ),
-      error: null,
-    }
-  }
+  const memos: MemoWithBook[] = (data as RpcMemoResult[]).map(({ tags, ...rest }) => ({
+    ...rest,
+    tags: (tags ?? []) as Tag[],
+  }))
 
   return { data: memos, error: null }
 }
