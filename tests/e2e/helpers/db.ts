@@ -35,7 +35,7 @@ export interface TestMemo {
 /** テスト用書籍を作成する */
 export async function createTestBook(
   supabase: TestSupabaseClient,
-  opts: { title?: string; status?: "unread" | "reading" | "completed" } = {}
+  opts: { title?: string; status?: "unread" | "reading" | "completed"; author?: string } = {}
 ): Promise<TestBook> {
   const {
     data: { user },
@@ -47,7 +47,7 @@ export async function createTestBook(
 
   const { data, error } = await supabase
     .from("books")
-    .insert({ user_id: user.id, title, status })
+    .insert({ user_id: user.id, title, status, author: opts.author ?? null })
     .select("id, title, status")
     .single()
 
