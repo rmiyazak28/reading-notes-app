@@ -1,35 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { searchMemos } from "@/features/memos/actions"
 
-// query なし → builder.range() で終端、query あり → await builder（range なし）で終端。
-// どちらのパスも mockResult で resolve 値を制御できるよう、
-// builder を thenable にして range() も mockResult を呼ぶ構成にする。
-const { mockResult, mockGetUser } = vi.hoisted(() => {
-  const mockResult = vi.fn()
+const { mockRpc, mockGetUser } = vi.hoisted(() => {
+  const mockRpc = vi.fn()
   const mockGetUser = vi.fn()
-  return { mockResult, mockGetUser }
+  return { mockRpc, mockGetUser }
 })
-
-// フルエントなビルダーオブジェクト。メソッドはすべて自身を返す。
-const builder: Record<string, unknown> = {}
-const chainMethods = ["select", "order", "eq", "or", "filter"]
-for (const m of chainMethods) {
-  builder[m] = vi.fn(() => builder)
-}
-// query なし: builder.range(...) が終端として呼ばれる
-builder["range"] = vi.fn(() => mockResult())
-// query あり: await builder が直接呼ばれるため thenable にする
-builder["then"] = (onfulfilled: (v: unknown) => unknown, onrejected?: (e: unknown) => unknown) =>
-  Promise.resolve(mockResult()).then(onfulfilled, onrejected)
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mockGetUser },
-    from: vi.fn(() => builder),
+    rpc: mockRpc,
   }),
 }))
 
-const baseMemo = {
+const baseRpcMemo = {
   id: "memo-1",
   user_id: "user-1",
   book_id: "book-1",
@@ -38,17 +23,13 @@ const baseMemo = {
   favorite: false,
   created_at: "2026-06-01T00:00:00Z",
   updated_at: "2026-06-01T00:00:00Z",
-  memo_tags: [],
-  books: { title: "リーダブルコード", author: "Dustin Boswell" },
+  book_title: "リーダブルコード",
+  book_author: "Dustin Boswell",
+  tags: [{ id: "tag-1", name: "設計" }],
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  // チェーンメソッドも毎回リセット後に再設定する
-  for (const m of chainMethods) {
-    (builder[m] as ReturnType<typeof vi.fn>).mockReturnValue(builder)
-  }
-  ;(builder["range"] as ReturnType<typeof vi.fn>).mockImplementation(() => mockResult())
 })
 
 describe("searchMemos", () => {
@@ -68,11 +49,8 @@ describe("searchMemos", () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
     })
 
-    it("メモ一覧を books 情報付きで返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [{ ...baseMemo, memo_tags: [{ tags: { id: "tag-1", name: "設計" } }] }],
-        error: null,
-      })
+    it("books情報付きのメモ一覧を返す", async () => {
+      mockRpc.mockResolvedValue({ data: [{ ...baseRpcMemo }], error: null })
 
       const result = await searchMemos({})
 
@@ -83,156 +61,95 @@ describe("searchMemos", () => {
       expect(result.data![0].tags).toEqual([{ id: "tag-1", name: "設計" }])
     })
 
-    it("memo_tags が空の場合 tags が空配列になる", async () => {
-      mockResult.mockResolvedValue({
-        data: [{ ...baseMemo, memo_tags: [] }],
-        error: null,
-      })
+    it("tags が空配列の場合そのまま空配列を返す", async () => {
+      mockRpc.mockResolvedValue({ data: [{ ...baseRpcMemo, tags: [] }], error: null })
 
       const result = await searchMemos({})
 
       expect(result.data![0].tags).toEqual([])
     })
 
-    it("books が null の場合 book_title が空文字・book_author が null になる", async () => {
-      mockResult.mockResolvedValue({
-        data: [{ ...baseMemo, books: null, memo_tags: [] }],
-        error: null,
-      })
+    it("tags が null の場合は空配列にフォールバックする", async () => {
+      mockRpc.mockResolvedValue({ data: [{ ...baseRpcMemo, tags: null }], error: null })
 
       const result = await searchMemos({})
 
-      expect(result.data![0].book_title).toBe("")
+      expect(result.data![0].tags).toEqual([])
+    })
+
+    it("book_author が null の場合 null のまま返す", async () => {
+      mockRpc.mockResolvedValue({ data: [{ ...baseRpcMemo, book_author: null }], error: null })
+
+      const result = await searchMemos({})
+
       expect(result.data![0].book_author).toBeNull()
     })
 
-    it("DB エラー時 DB_ERROR を返す", async () => {
-      mockResult.mockResolvedValue({ data: null, error: { message: "db error" } })
+    it("DB エラー時に DB_ERROR を返す", async () => {
+      mockRpc.mockResolvedValue({ data: null, error: { message: "db error" } })
 
       const result = await searchMemos({})
 
       expect(result.data).toBeNull()
       expect(result.error?.code).toBe("DB_ERROR")
     })
-
-    it("favoriteOnly=true のとき eq('favorite', true) が呼ばれる", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
-
-      await searchMemos({ favoriteOnly: true })
-
-      expect(builder["eq"]).toHaveBeenCalledWith("favorite", true)
-    })
-
-    it("favoriteOnly=false のとき eq は呼ばれない", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
-
-      await searchMemos({ favoriteOnly: false })
-
-      expect(builder["eq"]).not.toHaveBeenCalled()
-    })
-
-    it("query があっても or() は呼ばれない（クライアント側フィルタで処理）", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
-
-      await searchMemos({ query: "テスト" })
-
-      expect(builder["or"]).not.toHaveBeenCalled()
-    })
-
-    it("query が空文字の場合も or() は呼ばれない", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
-
-      await searchMemos({ query: "" })
-
-      expect(builder["or"]).not.toHaveBeenCalled()
-    })
   })
 
-  describe("クライアントサイドフィルタ（query あり）", () => {
+  describe("RPC 引数の伝達", () => {
     beforeEach(() => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockRpc.mockResolvedValue({ data: [], error: null })
     })
 
-    it("query がメモ内容に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", content: "命名は重要", memo_tags: [], books: { title: "本A", author: null } },
-          { ...baseMemo, id: "m2", content: "全く関係ない", memo_tags: [], books: { title: "本B", author: null } },
-        ],
-        error: null,
-      })
+    it("user.id が p_user_id として渡る", async () => {
+      await searchMemos({})
 
-      const result = await searchMemos({ query: "命名" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({ p_user_id: "user-1" }))
     })
 
-    it("query が書籍名に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", content: "xyz", memo_tags: [], books: { title: "リーダブルコード", author: null } },
-          { ...baseMemo, id: "m2", content: "xyz", memo_tags: [], books: { title: "別書籍", author: null } },
-        ],
-        error: null,
-      })
+    it("query がある場合に p_query としてトリム済み値を渡す", async () => {
+      await searchMemos({ query: "命名" })
 
-      const result = await searchMemos({ query: "リーダブル" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({ p_query: "命名" }))
     })
 
-    it("query がタグ名に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          {
-            ...baseMemo, id: "m1", content: "xyz",
-            memo_tags: [{ tags: { id: "t1", name: "設計" } }],
-            books: { title: "本A", author: null },
-          },
-          {
-            ...baseMemo, id: "m2", content: "xyz",
-            memo_tags: [{ tags: { id: "t2", name: "読書" } }],
-            books: { title: "本B", author: null },
-          },
-        ],
-        error: null,
-      })
+    it("query が空文字の場合は p_query に null を渡す", async () => {
+      await searchMemos({ query: "" })
 
-      const result = await searchMemos({ query: "設計" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({ p_query: null }))
     })
 
-    it("query が著者名に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", content: "xyz", memo_tags: [], books: { title: "本A", author: "山田太郎" } },
-          { ...baseMemo, id: "m2", content: "xyz", memo_tags: [], books: { title: "本B", author: "佐藤花子" } },
-        ],
-        error: null,
-      })
+    it("query が未指定の場合は p_query に null を渡す", async () => {
+      await searchMemos({})
 
-      const result = await searchMemos({ query: "山田" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({ p_query: null }))
     })
 
-    it("query が空文字の場合全件返す（クライアントフィルタなし）", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", memo_tags: [], books: { title: "本A", author: null } },
-          { ...baseMemo, id: "m2", memo_tags: [], books: { title: "本B", author: null } },
-        ],
-        error: null,
-      })
+    it("favoriteOnly: true の場合に p_favorite_only: true を渡す", async () => {
+      await searchMemos({ favoriteOnly: true })
 
-      const result = await searchMemos({ query: "" })
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({ p_favorite_only: true }))
+    })
 
-      expect(result.data).toHaveLength(2)
+    it("favoriteOnly: false の場合に p_favorite_only: false を渡す", async () => {
+      await searchMemos({ favoriteOnly: false })
+
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({ p_favorite_only: false }))
+    })
+
+    it("sortBy が p_sort_by として渡る", async () => {
+      await searchMemos({ sortBy: "updated_at" })
+
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({ p_sort_by: "updated_at" }))
+    })
+
+    it("limit と offset が p_limit・p_offset として渡る", async () => {
+      await searchMemos({ limit: 100, offset: 50 })
+
+      expect(mockRpc).toHaveBeenCalledWith("search_memos", expect.objectContaining({
+        p_limit: 100,
+        p_offset: 50,
+      }))
     })
   })
 })

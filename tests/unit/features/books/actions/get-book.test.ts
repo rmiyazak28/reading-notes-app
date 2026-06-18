@@ -39,7 +39,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }))
 
 const dbBook = {
-  id: "book-1",
+  id: "00000000-0000-0000-0000-000000000001",
   user_id: "user-1",
   title: "テスト書籍",
   author: "著者名",
@@ -64,7 +64,7 @@ describe("getBook", () => {
         from: vi.fn(),
       } as never)
 
-      const result = await getBook("book-1")
+      const result = await getBook("00000000-0000-0000-0000-000000000001")
 
       expect(result.data).toBeNull()
       expect(result.error?.code).toBe("UNAUTHORIZED")
@@ -75,7 +75,7 @@ describe("getBook", () => {
     it("PGRST116（0行）の場合 NOT_FOUND を返す", async () => {
       mockBooksSingle.mockResolvedValue({ data: null, error: { code: "PGRST116", message: "not found" } })
 
-      const result = await getBook("book-1")
+      const result = await getBook("00000000-0000-0000-0000-000000000001")
 
       expect(result.data).toBeNull()
       expect(result.error?.code).toBe("NOT_FOUND")
@@ -84,7 +84,7 @@ describe("getBook", () => {
     it("その他の DB エラーの場合 DB_ERROR を返す", async () => {
       mockBooksSingle.mockResolvedValue({ data: null, error: { code: "42P01", message: "table error" } })
 
-      const result = await getBook("book-1")
+      const result = await getBook("00000000-0000-0000-0000-000000000001")
 
       expect(result.data).toBeNull()
       expect(result.error?.code).toBe("DB_ERROR")
@@ -96,7 +96,7 @@ describe("getBook", () => {
       mockBooksSingle.mockResolvedValue({ data: dbBook, error: null })
       mockStarQuery.mockResolvedValue({ data: [], error: null })
 
-      const result = await getBook("book-1")
+      const result = await getBook("00000000-0000-0000-0000-000000000001")
 
       expect(result.error).toBeNull()
       expect(result.data?.memoCount).toBe(5)
@@ -109,7 +109,7 @@ describe("getBook", () => {
         error: null,
       })
 
-      const result = await getBook("book-1")
+      const result = await getBook("00000000-0000-0000-0000-000000000001")
 
       expect(result.data?.starCount).toBe(3)
     })
@@ -118,7 +118,7 @@ describe("getBook", () => {
       mockBooksSingle.mockResolvedValue({ data: dbBook, error: null })
       mockStarQuery.mockResolvedValue({ data: [], error: null })
 
-      const result = await getBook("book-1")
+      const result = await getBook("00000000-0000-0000-0000-000000000001")
 
       expect(result.data?.starCount).toBe(0)
     })
@@ -127,7 +127,7 @@ describe("getBook", () => {
       mockBooksSingle.mockResolvedValue({ data: dbBook, error: null })
       mockStarQuery.mockResolvedValue({ data: [], error: null })
 
-      const result = await getBook("book-1")
+      const result = await getBook("00000000-0000-0000-0000-000000000001")
 
       expect(result.data?.title).toBe("テスト書籍")
       expect(result.data?.author).toBe("著者名")
