@@ -185,13 +185,13 @@ type GetMemosParams = {
 
 ### searchMemos
 
-全メモ横断検索（SCR-06）用のAction。DB側RPC（`search_memos`）を呼び出しGINインデックスを活用する。
+全メモ横断検索（SCR-06）用のAction。`reading_memos.search_text` への GIN インデックスを利用し、PostgREST の標準クエリで直接検索する。
 
 ```ts
 searchMemos(params: SearchMemosParams): Promise<ActionResult<MemoWithBook[]>>
 
 type SearchMemosParams = {
-  query?: string;       // メモ内容・書籍名・著者名・タグ名の部分一致（DB側ILIKE検索）
+  query?: string;       // search_text への部分一致（メモ内容・書籍名・著者名・タグ名を横断）
   favoriteOnly?: boolean;
   sortBy?: "created_at" | "updated_at";
   limit?: number;       // デフォルト50、最大200
@@ -202,13 +202,11 @@ type SearchMemosParams = {
 | 項目 | 内容 |
 |---|---|
 | 認証 | 必須 |
-| 実装 | `supabase.rpc("search_memos", { p_user_id, p_query, ... })` を呼び出す |
-| 検索方式 | DB側 `ILIKE '%query%'` による横断検索。`p_query` の有無でRPC内部のクエリ構造が分岐する（§4.6参照） |
-| ソート | p_sort_by DESC（created_at または updated_at） |
-| ページネーション | p_limit / p_offset でDB側でページング（クライアント側キャッシュなし） |
-| JOIN | books（書籍名・著者名）、memo_tags、tags はDB側でまとめて取得 |
-| 注意 | PostgREST の or() は結合テーブルのカラムを直接参照できないためRPC化必須。また `ORDER BY ... LIMIT` と検索条件を同一SELECTに含めるとGINインデックスが使われない場合があるため、検索語ありの場合は一致行確定とページングを分離している（§4.6参照） |
-
+| 実装 | Supabaseクライアントから `reading_memos` を直接クエリ。`books`・`tags` は表示用に通常の選択的JOIN（`select` の埋め込みリソース構文）で取得する |
+| 検索方式 | `search_text.ilike.%query%` による単一カラム検索（GINインデックス `idx_memos_search_text_trgm` を使用） |
+| ソート | sortBy DESC（created_at または updated_at） |
+| ページネーション | `.range(offset, offset + limit - 1)` でDB側ページング |
+| 注意 | 旧RPC関数（`search_memos`）は廃止。検索対象が単一テーブル・単一カラムになったため、複数テーブルJOINに起因するGINインデックス不使用の問題は発生しない |
 ---
 
 ### createMemo

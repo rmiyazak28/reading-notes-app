@@ -76,6 +76,7 @@ ON DELETE CASCADE
 | book_id | uuid | - | books.id | ○ | 対象書籍 |
 | page_number | integer | - | - | - | ページ番号 |
 | content | text | - | - | ○ | メモ内容 |
+| search_text | text | - | - | ○ | 全メモ検索用の非正規化カラム。content + 書籍タイトル + 著者名 + タグ名をスペース区切りで連結。トリガーで自動同期（§4.7）。アプリからは直接書き込まない |
 | favorite | boolean | - | - | ○ | DEFAULT false |
 | created_at | timestamptz | - | - | ○ | DEFAULT now() |
 | updated_at | timestamptz | - | - | ○ | DEFAULT now() |
@@ -269,13 +270,20 @@ CREATE INDEX idx_memos_user_created_at
 ON reading_memos(user_id, created_at DESC);
 ```
 
-### メモ全文部分一致検索（pg_trgm + GIN）
+### 全文横断検索用カラムと GIN インデックス（search_text + pg_trgm）
 
-```sql
-CREATE INDEX idx_memos_content_trgm
+メモ内容・書籍タイトル・著者名・タグ名を横断検索するため、`reading_memos` に非正規化カラム `search_text` を追加し、単一の GIN インデックスで検索する。
+
+​```sql
+ALTER TABLE reading_memos
+ADD COLUMN search_text text;
+
+CREATE INDEX idx_memos_search_text_trgm
 ON reading_memos
-USING gin (content gin_trgm_ops);
-```
+USING gin (search_text gin_trgm_ops);
+​```
+
+`search_text` は `content` ・紐づく `books.title` ・`books.author` ・紐づく全 `tags.name` をスペース区切りで連結した文字列とし、後述のトリガーにより自動更新する（§4.6参照）。
 
 ---
 
@@ -317,102 +325,50 @@ ON memo_tags(tag_id);
 
 ---
 
-# 4.6 RPC関数設計
+# 4.6 search_text 同期トリガー設計
 
 ---
 
-## search_memos
+## sync_memo_search_text（関数）
 
-全メモ横断検索（SCR-06）用のストアド関数。PostgREST の `.or()` は結合先テーブルのカラムを直接指定できないため、メモ内容・書籍名・著者名・タグ名の横断検索はRPC化が必須。DB側で `ILIKE` を使い GINインデックス（pg_trgm）を活用する。
-
-### シグネチャ
+`reading_memos.search_text` を最新の `content` ・書籍情報・タグ情報で再計算し更新する。
 
 ```sql
-CREATE OR REPLACE FUNCTION search_memos(
-    p_user_id uuid,
-    p_query text DEFAULT NULL,
-    p_favorite_only boolean DEFAULT false,
-    p_sort_by text DEFAULT 'created_at',
-    p_limit integer DEFAULT 50,
-    p_offset integer DEFAULT 0
-)
-RETURNS TABLE (
-    id uuid,
-    user_id uuid,
-    book_id uuid,
-    page_number integer,
-    content text,
-    favorite boolean,
-    created_at timestamptz,
-    updated_at timestamptz,
-    book_title text,
-    book_author text,
-    tags jsonb
-)
-LANGUAGE plpgsql
-SECURITY INVOKER
+CREATE OR REPLACE FUNCTION sync_memo_search_text(p_memo_id uuid)
+RETURNS void AS $$
+BEGIN
+    UPDATE reading_memos m
+    SET search_text = trim(
+        coalesce(m.content, '') || ' ' ||
+        coalesce(b.title, '') || ' ' ||
+        coalesce(b.author, '') || ' ' ||
+        coalesce((
+            SELECT string_agg(t.name, ' ')
+            FROM memo_tags mt
+            JOIN tags t ON t.id = mt.tag_id
+            WHERE mt.memo_id = m.id
+        ), '')
+    )
+    FROM books b
+    WHERE m.book_id = b.id
+      AND m.id = p_memo_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 ```
 
-### 引数
+## 同期トリガー一覧
 
-| 引数 | 型 | デフォルト | 説明 |
-|---|---|---|---|
-| p_user_id | uuid | - | 取得対象ユーザーID（Server Action側で認証済みユーザーのIDを渡す） |
-| p_query | text | NULL | 検索キーワード。NULLまたは空文字の場合は検索条件なし |
-| p_favorite_only | boolean | false | trueの場合はお気に入りのみ |
-| p_sort_by | text | 'created_at' | ソートカラム（'created_at' または 'updated_at'） |
-| p_limit | integer | 50 | 取得件数上限 |
-| p_offset | integer | 0 | オフセット（ページネーション用） |
-
-### 戻り値カラム
-
-| カラム | 型 | 説明 |
+| トリガー対象 | イベント | 動作 |
 |---|---|---|
-| id〜updated_at | reading_memosの全カラム | メモ本体の情報 |
-| book_title | text | 紐付き書籍のタイトル（books.titleのJOIN結果） |
-| book_author | text（nullable） | 紐付き書籍の著者名（books.authorのJOIN結果） |
-| tags | jsonb | タグの配列 `[{"id": "...", "name": "..."}]`。タグなしは空配列 `[]` |
+| `reading_memos` | INSERT, UPDATE OF content, book_id | 自身の `search_text` を再計算 |
+| `books` | UPDATE OF title, author | 紐づく全メモの `search_text` を再計算 |
+| `memo_tags` | INSERT, DELETE | 対象メモの `search_text` を再計算 |
+| `tags` | UPDATE OF name | 紐づく全メモの `search_text` を再計算 |
 
-### 検索条件
+各トリガーは `sync_memo_search_text(memo_id)` を該当メモ分呼び出すラッパー関数として実装する（具体的なトリガー関数定義は実装時にマイグレーションファイルへ記述する）。
 
-- `p_query` が指定された場合、以下のいずれかに `ILIKE '%p_query%'` でヒットするメモを返す
-  - `reading_memos.content`
-  - `books.title`
-  - `books.author`
-  - `tags.name`（EXISTS副問合せ経由）
-- `SECURITY INVOKER` のため RLS はバイパスしない。加えて `WHERE reading_memos.user_id = p_user_id` を明示する
+### 検索方式の変更点
 
-### 内部処理の分岐（p_queryの有無）
-
-`p_query` の有無によって、内部のクエリ構造を分岐させる。`ORDER BY ... LIMIT` を検索条件と同じSELECTに含めると、プランナーが `idx_memos_user_created_at` を優先しGINインデックスが使われないことが実測で確認されたため（50,000件規模のEXPLAIN ANALYZE検証）、検索語ありの場合は一致行の確定とソート・ページングを段階的に分離する。
-
-| 分岐 | 処理方式 | 使用される主インデックス |
-|---|---|---|
-| `p_query` が NULL または空文字 | `reading_memos` を `user_id` で絞り `created_at`/`updated_at` 順にスキャンし `LIMIT/OFFSET` | `idx_memos_user_created_at` |
-| `p_query` が指定されている | まずCTEで `content`/`title`/`author`/`tags.name` への一致行を確定させ、その後にソート・ページングを行う | `idx_memos_content_trgm`、`idx_books_title_trgm`、`idx_books_author_trgm`、`idx_tags_name_trgm`（候補として使用されうる。実際の選択は一致件数の選択性に依存し、ヒット件数がテーブル全体に対して多い場合はSeq Scanが選ばれることもある） |
-
-```sql
--- 検索語あり時のクエリ構造（概要）
-WITH matched AS (
-    SELECT m.id
-    FROM reading_memos m
-    JOIN books b ON m.book_id = b.id
-    WHERE m.user_id = p_user_id
-        AND (p_favorite_only = false OR m.favorite = true)
-        AND (
-            m.content ILIKE '%' || p_query || '%'
-            OR b.title ILIKE '%' || p_query || '%'
-            OR b.author ILIKE '%' || p_query || '%'
-            OR EXISTS (
-                SELECT 1 FROM memo_tags mt JOIN tags t ON mt.tag_id = t.id
-                WHERE mt.memo_id = m.id AND t.name ILIKE '%' || p_query || '%'
-            )
-        )
-)
-SELECT ...
-FROM matched
-JOIN reading_memos m ON m.id = matched.id
-JOIN books b ON m.book_id = b.id
-ORDER BY CASE WHEN p_sort_by = 'updated_at' THEN m.updated_at ELSE m.created_at END DESC
-LIMIT p_limit OFFSET p_offset;
-```
+- 検索は `reading_memos.search_text ILIKE '%query%'` の単一条件となり、RPC関数（旧 `search_memos`）は廃止する
+- Server Action（`searchMemos`）は PostgREST の標準クエリ（`.ilike()` / `.or()` 不要）で直接 `reading_memos` を検索できる（§5.2参照）
+- 旧方式で発生していた「複数テーブルJOINのOR条件によりGINインデックスが使われない」問題は、検索対象が単一テーブル・単一カラムになることで解消される

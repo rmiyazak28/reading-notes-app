@@ -40,6 +40,7 @@ erDiagram
         uuid book_id FK
         integer page_number
         text content
+        text search_text
         boolean favorite
         timestamptz created_at
         timestamptz updated_at
