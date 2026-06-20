@@ -360,15 +360,20 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 | トリガー対象 | イベント | 動作 |
 |---|---|---|
-| `reading_memos` | INSERT, UPDATE OF content, book_id | 自身の `search_text` を再計算 |
-| `books` | UPDATE OF title, author | 紐づく全メモの `search_text` を再計算 |
-| `memo_tags` | INSERT, DELETE | 対象メモの `search_text` を再計算 |
-| `tags` | UPDATE OF name | 紐づく全メモの `search_text` を再計算 |
+| `reading_memos` | BEFORE INSERT | `NEW.search_text` に直接代入（content + 書籍タイトル + 著者名。タグはこの時点で存在しないため含まれない） |
+| `reading_memos` | AFTER UPDATE OF content, book_id | `sync_memo_search_text()` で自身の `search_text` を再計算 |
+| `books` | AFTER UPDATE OF title, author | 紐づく全メモの `search_text` を再計算 |
+| `memo_tags` | AFTER INSERT, DELETE | 対象メモの `search_text` を再計算（INSERTタイミングでタグ込みの値に更新される） |
+| `tags` | AFTER UPDATE OF name | 紐づく全メモの `search_text` を再計算 |
 
-各トリガーは `sync_memo_search_text(memo_id)` を該当メモ分呼び出すラッパー関数として実装する（具体的なトリガー関数定義は実装時にマイグレーションファイルへ記述する）。
+`reading_memos` の BEFORE INSERT トリガーのみ、行がまだ存在しないため `sync_memo_search_text()`（UPDATE文ベース）を呼ばず、トリガー関数内で `books` を直接 SELECT し `NEW.search_text` に代入する。それ以外のトリガー（AFTER UPDATE / AFTER INSERT,DELETE）は、`sync_memo_search_text(memo_id)` を該当メモ分呼び出すラッパー関数として実装する（具体的なトリガー関数定義は実装時にマイグレーションファイルへ記述する）。
 
 ### 検索方式の変更点
 
 - 検索は `reading_memos.search_text ILIKE '%query%'` の単一条件となり、RPC関数（旧 `search_memos`）は廃止する
 - Server Action（`searchMemos`）は PostgREST の標準クエリ（`.ilike()` / `.or()` 不要）で直接 `reading_memos` を検索できる（§5.2参照）
 - 旧方式で発生していた「複数テーブルJOINのOR条件によりGINインデックスが使われない」問題は、検索対象が単一テーブル・単一カラムになることで解消される
+
+### バックフィル後の統計情報更新
+
+既存データへの `search_text` バックフィル（大量行の一括 UPDATE）実行後は、プランナーの行数見積もりが古い統計情報のまま大きく乖離する場合がある。バックフィル完了・NOT NULL制約付与後に `ANALYZE reading_memos;` を実行し、統計情報を最新化すること。
