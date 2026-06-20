@@ -28,19 +28,45 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- 2. reading_memos用トリガー関数・トリガー（INSERT, UPDATE OF content, book_id）
-CREATE OR REPLACE FUNCTION trg_sync_search_text_on_memo()
+-- 2a. reading_memos用トリガー関数・トリガー（BEFORE INSERT）
+--     行がまだ存在しないため NEW.search_text に直接代入する。
+--     memo_tags はこの時点で存在しないため、タグは含まれない
+--     （タグ付与はINSERT後のmemo_tags INSERTトリガーで再計算される）
+CREATE OR REPLACE FUNCTION trg_sync_search_text_on_memo_insert()
+RETURNS trigger AS $$
+DECLARE
+    v_title text;
+    v_author text;
+BEGIN
+    SELECT title, author INTO v_title, v_author
+    FROM books WHERE id = NEW.book_id;
+
+    NEW.search_text := trim(
+        coalesce(NEW.content, '') || ' ' ||
+        coalesce(v_title, '') || ' ' ||
+        coalesce(v_author, '')
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_memos_sync_search_text_before_insert
+    BEFORE INSERT ON reading_memos
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_sync_search_text_on_memo_insert();
+
+-- 2b. reading_memos用トリガー関数・トリガー（AFTER UPDATE OF content, book_id）
+--     行は既に存在するため、既存の sync_memo_search_text（UPDATE文ベース）をそのまま使う
+CREATE OR REPLACE FUNCTION trg_sync_search_text_on_memo_update()
 RETURNS trigger AS $$
 BEGIN
     PERFORM sync_memo_search_text(NEW.id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_memos_sync_search_text
-    AFTER INSERT OR UPDATE OF content, book_id ON reading_memos
+CREATE TRIGGER trg_memos_sync_search_text_after_update
+    AFTER UPDATE OF content, book_id ON reading_memos
     FOR EACH ROW
-    EXECUTE FUNCTION trg_sync_search_text_on_memo();
+    EXECUTE FUNCTION trg_sync_search_text_on_memo_update();
 
 -- 3. books用トリガー関数・トリガー（UPDATE OF title, author）
 CREATE OR REPLACE FUNCTION trg_sync_search_text_on_book()
@@ -104,6 +130,10 @@ BEGIN
         PERFORM sync_memo_search_text(v_memo_id);
     END LOOP;
 END $$;
+
+-- 6b. バックフィルによる大量UPDATE後は統計情報が古いままになるため、
+--     プランナーの見積もり精度を確保するためANALYZEで統計情報を更新する
+ANALYZE reading_memos;
 
 -- 7. バックフィル完了後にNOT NULL制約を付与
 ALTER TABLE reading_memos
