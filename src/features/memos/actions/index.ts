@@ -10,8 +10,17 @@ type RawMemo = Omit<MemoWithTags, "tags"> & {
   memo_tags: { tags: { id: string; name: string } | null }[]
 }
 
-type RpcMemoResult = Omit<MemoWithBook, "tags"> & {
-  tags: { id: string; name: string }[] | null
+type RawSearchMemo = {
+  id: string
+  user_id: string
+  book_id: string
+  page_number: number | null
+  content: string
+  favorite: boolean
+  created_at: string
+  updated_at: string
+  books: { title: string; author: string | null } | null
+  memo_tags: { tags: { id: string; name: string } | null }[]
 }
 
 type GetMemosParams = {
@@ -46,20 +55,31 @@ export async function searchMemos(params: SearchMemosParams): Promise<ActionResu
 
   const { query, favoriteOnly, sortBy = "created_at", limit = 50, offset = 0 } = parsed.data
 
-  const { data, error } = await supabase.rpc("search_memos", {
-    p_user_id: user.id,
-    p_query: query && query.trim() ? query.trim() : null,
-    p_favorite_only: favoriteOnly ?? false,
-    p_sort_by: sortBy,
-    p_limit: limit,
-    p_offset: offset,
-  })
+  const trimmedQuery = query && query.trim() ? query.trim() : null
+
+  let queryBuilder = supabase
+    .from("reading_memos")
+    .select("id, user_id, book_id, page_number, content, favorite, created_at, updated_at, books(title, author), memo_tags(tags(id, name))")
+    .order(sortBy, { ascending: false })
+
+  if (trimmedQuery) {
+    queryBuilder = queryBuilder.ilike("search_text", `%${trimmedQuery}%`)
+  }
+  if (favoriteOnly) {
+    queryBuilder = queryBuilder.eq("favorite", true)
+  }
+
+  const { data, error } = await queryBuilder.range(offset, offset + limit - 1)
 
   if (error) return { data: null, error: { code: "DB_ERROR", message: "処理に失敗しました" } }
 
-  const memos: MemoWithBook[] = (data as RpcMemoResult[]).map(({ tags, ...rest }) => ({
+  const memos: MemoWithBook[] = (data as unknown as RawSearchMemo[]).map(({ books, memo_tags, ...rest }) => ({
     ...rest,
-    tags: (tags ?? []) as Tag[],
+    book_title: books?.title ?? "",
+    book_author: books?.author ?? null,
+    tags: memo_tags
+      .filter((mt): mt is { tags: Tag } => mt.tags !== null)
+      .map(mt => mt.tags),
   }))
 
   return { data: memos, error: null }

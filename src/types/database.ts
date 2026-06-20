@@ -88,6 +88,7 @@ export type Database = {
           favorite: boolean
           id: string
           page_number: number | null
+          search_text: string
           updated_at: string
           user_id: string
         }
@@ -149,29 +150,6 @@ export type Database = {
     Functions: {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
-      search_memos: {
-        Args: {
-          p_user_id: string
-          p_query?: string | null
-          p_favorite_only?: boolean
-          p_sort_by?: string
-          p_limit?: number
-          p_offset?: number
-        }
-        Returns: {
-          id: string
-          user_id: string
-          book_id: string
-          page_number: number | null
-          content: string
-          favorite: boolean
-          created_at: string
-          updated_at: string
-          book_title: string
-          book_author: string | null
-          tags: { id: string; name: string }[] | null
-        }[]
-      }
     }
     Enums: {
       [_ in never]: never
