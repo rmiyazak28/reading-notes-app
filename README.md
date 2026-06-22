@@ -329,7 +329,7 @@ src/
 | Service Role Key の使用箇所が設計より拡大していた | Medium | Service Role Key の使用を `deleteAccount` のみに限定 |
 | `signUp`/`signIn` にサーバーサイドの Zod 検証がなかった | Medium | 両 Action 冒頭に `signUpSchema`（名前・メール形式・パスワードポリシー）/ `signInSchema` を追加。単体テスト12ケースを追加 |
 | 検索クエリを PostgREST の `.or()` へ未エスケープで埋め込み（フィルタインジェクション） | Medium | フィルタ構文を壊す特殊文字（`,`・`(`・`)`・`"`・`\`・`'`）を除去してから埋め込む処理を追加 |
-| メモ全件取得後にクライアント側でフィルタ（自己DoS） | Low | 検索時の取得件数に上限（`SEARCH_MAX = 1000`）を設定 |
+| メモ全件取得後にクライアント側でフィルタ（自己DoS） | Low | `reading_memos` に `search_text` 非正規化カラムと GIN トライグラムインデックスを追加し、DB 側での `.ilike()` 検索に移行 |
 | 参照系 Action（`searchMemos`・`getMemos`・`getMemo`・`toggleFavorite`・`deleteMemo`）に入力検証がなかった | Low | UUID 形式チェック・`sortBy`/`limit`/`offset` の範囲検証を Zod で追加 |
 | `memo_tags` INSERT で他ユーザーの `tag_id` を紐付け可能だった | Low | RLS の INSERT ポリシーに `tags.user_id = auth.uid()` の所有権検証を追加（マイグレーションで対応） |
 | 全 Action で DB エラーメッセージを素通ししていた（内部スキーマ情報の露出リスク） | Low | `DB_ERROR` 時は「処理に失敗しました」に統一し、生メッセージをクライアントへ返さないよう変更 |
@@ -562,7 +562,6 @@ E2E_TEST_PASSWORD=YourTestPassword123
 - Google Books API 連携（書籍名・著者・表紙画像の自動取得）
 - 表紙画像グリッド表示
 - 全メモ検索の複数単語対応（スペース区切り AND 検索）
-- pg_trgm を活かした DB 側全文検索（RPC / `textSearch`）への移行
 - タブレット UI 対応
 
 ### Phase 3

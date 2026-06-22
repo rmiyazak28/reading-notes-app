@@ -88,9 +88,9 @@
 
 ### Low: searchMemos の無制限取得 → 対応済み
 
-- **対応内容:** `query` 指定時の取得件数に上限 1000 件（`SEARCH_MAX`）を設定。
-- **変更ファイル:** `src/features/memos/actions/index.ts`
-- **コミット:** `fix: searchMemos のクエリ検索時に上限1000件を設定`
+- **対応内容:** 当初は取得件数に上限 1000 件（`SEARCH_MAX`）を設定したが、設計に反してGIN インデックスが実際には使用されていないことが判明。GIN を活用する方向で複数テーブル JOIN のまま RPC 関数化を試みたがGinが機能しなかったため、`reading_memos` テーブルに `search_text` 非正規化カラムを追加し GIN トライグラムインデックスを付与。`search_memos` RPC を廃止し、`.ilike("search_text", ...)` による DB 側検索に移行した。
+- **変更ファイル:** `src/features/memos/actions/index.ts`、`supabase/migrations/`（`search_text` カラム追加・トリガー・GINインデックス）
+- **コミット:** `fix: searchMemos をDB側GINインデックス検索（search_text+ilike）に移行`
 
 ### Low: 参照系 Action の入力バリデーション欠如 → 対応済み
 
