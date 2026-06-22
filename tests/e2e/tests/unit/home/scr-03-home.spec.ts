@@ -6,7 +6,7 @@ import {
   deleteTestBook,
   deleteTestMemo,
   type TestSupabaseClient,
-} from "../../helpers/db"
+} from "../../../helpers/db"
 
 /** Radix UI の Select で指定値を選択する */
 async function selectBookStatus(page: Page, value: "unread" | "reading" | "completed"): Promise<void> {

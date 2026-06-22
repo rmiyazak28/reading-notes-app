@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test"
-import { createTestDb } from "../../helpers/db"
+import { createTestDb } from "../../../helpers/db"
 
 const EMAIL = process.env.E2E_TEST_EMAIL!
 const PASSWORD = process.env.E2E_TEST_PASSWORD!

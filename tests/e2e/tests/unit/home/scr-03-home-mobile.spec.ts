@@ -6,7 +6,7 @@ import {
   deleteTestBook,
   deleteTestMemo,
   type TestSupabaseClient,
-} from "../../helpers/db"
+} from "../../../helpers/db"
 
 test.use({ ...devices["Pixel 5"] })
 

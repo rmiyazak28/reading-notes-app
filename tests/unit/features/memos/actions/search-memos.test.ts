@@ -1,35 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { searchMemos } from "@/features/memos/actions"
 
-// query なし → builder.range() で終端、query あり → await builder（range なし）で終端。
-// どちらのパスも mockResult で resolve 値を制御できるよう、
-// builder を thenable にして range() も mockResult を呼ぶ構成にする。
-const { mockResult, mockGetUser } = vi.hoisted(() => {
-  const mockResult = vi.fn()
+const { mockFrom, mockGetUser } = vi.hoisted(() => {
+  const mockFrom = vi.fn()
   const mockGetUser = vi.fn()
-  return { mockResult, mockGetUser }
+  return { mockFrom, mockGetUser }
 })
-
-// フルエントなビルダーオブジェクト。メソッドはすべて自身を返す。
-const builder: Record<string, unknown> = {}
-const chainMethods = ["select", "order", "eq", "or", "filter"]
-for (const m of chainMethods) {
-  builder[m] = vi.fn(() => builder)
-}
-// query なし: builder.range(...) が終端として呼ばれる
-builder["range"] = vi.fn(() => mockResult())
-// query あり: await builder が直接呼ばれるため thenable にする
-builder["then"] = (onfulfilled: (v: unknown) => unknown, onrejected?: (e: unknown) => unknown) =>
-  Promise.resolve(mockResult()).then(onfulfilled, onrejected)
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: { getUser: mockGetUser },
-    from: vi.fn(() => builder),
+    from: mockFrom,
   }),
 }))
 
-const baseMemo = {
+const baseRawMemo = {
   id: "memo-1",
   user_id: "user-1",
   book_id: "book-1",
@@ -38,17 +23,23 @@ const baseMemo = {
   favorite: false,
   created_at: "2026-06-01T00:00:00Z",
   updated_at: "2026-06-01T00:00:00Z",
-  memo_tags: [],
   books: { title: "リーダブルコード", author: "Dustin Boswell" },
+  memo_tags: [{ tags: { id: "tag-1", name: "設計" } }],
+}
+
+function buildChain(resolvedValue: { data: unknown; error: unknown }) {
+  const chain: Record<string, unknown> = {}
+  const methods = ["select", "order", "range", "ilike", "eq"]
+  methods.forEach(m => {
+    chain[m] = vi.fn(() => chain)
+  })
+  // range is terminal — return the resolved value
+  ;(chain.range as ReturnType<typeof vi.fn>).mockResolvedValue(resolvedValue)
+  return chain
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  // チェーンメソッドも毎回リセット後に再設定する
-  for (const m of chainMethods) {
-    (builder[m] as ReturnType<typeof vi.fn>).mockReturnValue(builder)
-  }
-  ;(builder["range"] as ReturnType<typeof vi.fn>).mockImplementation(() => mockResult())
 })
 
 describe("searchMemos", () => {
@@ -68,11 +59,9 @@ describe("searchMemos", () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
     })
 
-    it("メモ一覧を books 情報付きで返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [{ ...baseMemo, memo_tags: [{ tags: { id: "tag-1", name: "設計" } }] }],
-        error: null,
-      })
+    it("books情報とタグ付きのメモ一覧を返す", async () => {
+      const chain = buildChain({ data: [{ ...baseRawMemo }], error: null })
+      mockFrom.mockReturnValue(chain)
 
       const result = await searchMemos({})
 
@@ -83,22 +72,39 @@ describe("searchMemos", () => {
       expect(result.data![0].tags).toEqual([{ id: "tag-1", name: "設計" }])
     })
 
-    it("memo_tags が空の場合 tags が空配列になる", async () => {
-      mockResult.mockResolvedValue({
-        data: [{ ...baseMemo, memo_tags: [] }],
-        error: null,
-      })
+    it("memo_tags が空配列の場合 tags は空配列を返す", async () => {
+      const chain = buildChain({ data: [{ ...baseRawMemo, memo_tags: [] }], error: null })
+      mockFrom.mockReturnValue(chain)
 
       const result = await searchMemos({})
 
       expect(result.data![0].tags).toEqual([])
     })
 
-    it("books が null の場合 book_title が空文字・book_author が null になる", async () => {
-      mockResult.mockResolvedValue({
-        data: [{ ...baseMemo, books: null, memo_tags: [] }],
+    it("memo_tags に tags: null が混在する場合はスキップする", async () => {
+      const chain = buildChain({ data: [{ ...baseRawMemo, memo_tags: [{ tags: null }] }], error: null })
+      mockFrom.mockReturnValue(chain)
+
+      const result = await searchMemos({})
+
+      expect(result.data![0].tags).toEqual([])
+    })
+
+    it("books.author が null の場合 book_author は null を返す", async () => {
+      const chain = buildChain({
+        data: [{ ...baseRawMemo, books: { title: "タイトル", author: null } }],
         error: null,
       })
+      mockFrom.mockReturnValue(chain)
+
+      const result = await searchMemos({})
+
+      expect(result.data![0].book_author).toBeNull()
+    })
+
+    it("books が null の場合 book_title は空文字・book_author は null を返す", async () => {
+      const chain = buildChain({ data: [{ ...baseRawMemo, books: null }], error: null })
+      mockFrom.mockReturnValue(chain)
 
       const result = await searchMemos({})
 
@@ -106,8 +112,9 @@ describe("searchMemos", () => {
       expect(result.data![0].book_author).toBeNull()
     })
 
-    it("DB エラー時 DB_ERROR を返す", async () => {
-      mockResult.mockResolvedValue({ data: null, error: { message: "db error" } })
+    it("DB エラー時に DB_ERROR を返す", async () => {
+      const chain = buildChain({ data: null, error: { message: "db error" } })
+      mockFrom.mockReturnValue(chain)
 
       const result = await searchMemos({})
 
@@ -115,124 +122,83 @@ describe("searchMemos", () => {
       expect(result.error?.code).toBe("DB_ERROR")
     })
 
-    it("favoriteOnly=true のとき eq('favorite', true) が呼ばれる", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
+    it("返却値に search_text が含まれない", async () => {
+      const chain = buildChain({ data: [{ ...baseRawMemo }], error: null })
+      mockFrom.mockReturnValue(chain)
 
-      await searchMemos({ favoriteOnly: true })
+      const result = await searchMemos({})
 
-      expect(builder["eq"]).toHaveBeenCalledWith("favorite", true)
-    })
-
-    it("favoriteOnly=false のとき eq は呼ばれない", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
-
-      await searchMemos({ favoriteOnly: false })
-
-      expect(builder["eq"]).not.toHaveBeenCalled()
-    })
-
-    it("query があっても or() は呼ばれない（クライアント側フィルタで処理）", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
-
-      await searchMemos({ query: "テスト" })
-
-      expect(builder["or"]).not.toHaveBeenCalled()
-    })
-
-    it("query が空文字の場合も or() は呼ばれない", async () => {
-      mockResult.mockResolvedValue({ data: [], error: null })
-
-      await searchMemos({ query: "" })
-
-      expect(builder["or"]).not.toHaveBeenCalled()
+      expect(result.data![0]).not.toHaveProperty("search_text")
     })
   })
 
-  describe("クライアントサイドフィルタ（query あり）", () => {
+  describe("クエリ条件の構築", () => {
+    let chain: ReturnType<typeof buildChain>
+
     beforeEach(() => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      chain = buildChain({ data: [], error: null })
+      mockFrom.mockReturnValue(chain)
     })
 
-    it("query がメモ内容に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", content: "命名は重要", memo_tags: [], books: { title: "本A", author: null } },
-          { ...baseMemo, id: "m2", content: "全く関係ない", memo_tags: [], books: { title: "本B", author: null } },
-        ],
-        error: null,
-      })
+    it("query がある場合に ilike('search_text', '%query%') を呼ぶ", async () => {
+      await searchMemos({ query: "命名" })
 
-      const result = await searchMemos({ query: "命名" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(chain.ilike).toHaveBeenCalledWith("search_text", "%命名%")
     })
 
-    it("query が書籍名に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", content: "xyz", memo_tags: [], books: { title: "リーダブルコード", author: null } },
-          { ...baseMemo, id: "m2", content: "xyz", memo_tags: [], books: { title: "別書籍", author: null } },
-        ],
-        error: null,
-      })
+    it("query をトリムして ilike に渡す", async () => {
+      await searchMemos({ query: "  命名  " })
 
-      const result = await searchMemos({ query: "リーダブル" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(chain.ilike).toHaveBeenCalledWith("search_text", "%命名%")
     })
 
-    it("query がタグ名に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          {
-            ...baseMemo, id: "m1", content: "xyz",
-            memo_tags: [{ tags: { id: "t1", name: "設計" } }],
-            books: { title: "本A", author: null },
-          },
-          {
-            ...baseMemo, id: "m2", content: "xyz",
-            memo_tags: [{ tags: { id: "t2", name: "読書" } }],
-            books: { title: "本B", author: null },
-          },
-        ],
-        error: null,
-      })
+    it("query が空文字の場合は ilike を呼ばない", async () => {
+      await searchMemos({ query: "" })
 
-      const result = await searchMemos({ query: "設計" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(chain.ilike).not.toHaveBeenCalled()
     })
 
-    it("query が著者名に部分一致するメモだけ返す", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", content: "xyz", memo_tags: [], books: { title: "本A", author: "山田太郎" } },
-          { ...baseMemo, id: "m2", content: "xyz", memo_tags: [], books: { title: "本B", author: "佐藤花子" } },
-        ],
-        error: null,
-      })
+    it("query が未指定の場合は ilike を呼ばない", async () => {
+      await searchMemos({})
 
-      const result = await searchMemos({ query: "山田" })
-
-      expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe("m1")
+      expect(chain.ilike).not.toHaveBeenCalled()
     })
 
-    it("query が空文字の場合全件返す（クライアントフィルタなし）", async () => {
-      mockResult.mockResolvedValue({
-        data: [
-          { ...baseMemo, id: "m1", memo_tags: [], books: { title: "本A", author: null } },
-          { ...baseMemo, id: "m2", memo_tags: [], books: { title: "本B", author: null } },
-        ],
-        error: null,
-      })
+    it("favoriteOnly: true の場合に eq('favorite', true) を呼ぶ", async () => {
+      await searchMemos({ favoriteOnly: true })
 
-      const result = await searchMemos({ query: "" })
+      expect(chain.eq).toHaveBeenCalledWith("favorite", true)
+    })
 
-      expect(result.data).toHaveLength(2)
+    it("favoriteOnly: false の場合は eq を呼ばない", async () => {
+      await searchMemos({ favoriteOnly: false })
+
+      expect(chain.eq).not.toHaveBeenCalled()
+    })
+
+    it("sortBy を order に渡す", async () => {
+      await searchMemos({ sortBy: "updated_at" })
+
+      expect(chain.order).toHaveBeenCalledWith("updated_at", { ascending: false })
+    })
+
+    it("sortBy 未指定の場合は created_at DESC でソートする", async () => {
+      await searchMemos({})
+
+      expect(chain.order).toHaveBeenCalledWith("created_at", { ascending: false })
+    })
+
+    it("limit と offset を range に渡す", async () => {
+      await searchMemos({ limit: 100, offset: 50 })
+
+      expect(chain.range).toHaveBeenCalledWith(50, 149)
+    })
+
+    it("limit・offset 未指定の場合はデフォルト値（50, 0）で range を呼ぶ", async () => {
+      await searchMemos({})
+
+      expect(chain.range).toHaveBeenCalledWith(0, 49)
     })
   })
 })

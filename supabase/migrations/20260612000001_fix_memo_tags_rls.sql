@@ -8,8 +8,9 @@
 --       WITH CHECK 句で検証する。
 -- 参照: 設計書 §6.2 認可 > memo_tags
 -- ============================================================
+DROP POLICY IF EXISTS "memo_tags_insert_own" ON memo_tags;
 
-CREATE OR REPLACE POLICY "memo_tags_insert_own"
+CREATE POLICY "memo_tags_insert_own"
     ON memo_tags FOR INSERT
     TO authenticated
     WITH CHECK (

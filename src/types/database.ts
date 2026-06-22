@@ -88,6 +88,7 @@ export type Database = {
           favorite: boolean
           id: string
           page_number: number | null
+          search_text: string
           updated_at: string
           user_id: string
         }

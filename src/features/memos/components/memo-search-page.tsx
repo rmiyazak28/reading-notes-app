@@ -48,10 +48,6 @@ export function MemoSearchPage({
   // メモ単位の Set でトグル中を管理する
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set())
 
-  // クエリあり時は PostgREST の制限で全件取得 → クライアント絞り込みが必要。
-  // 全件をキャッシュしておき「もっと見る」では追加 DB アクセスなしに次の PAGE_SIZE 件を表示する。
-  const cachedQueryResultsRef = useRef<MemoWithBook[]>([])
-
   // 検索条件変更をURLに反映する（debounce 付き）
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -78,17 +74,8 @@ export function MemoSearchPage({
           toast({ title: "取得エラー", description: result.error.message, variant: "destructive" })
           return
         }
-        if (q.trim()) {
-          // クエリあり：PostgREST 制限により全件取得 → キャッシュして先頭 PAGE_SIZE 件のみ表示
-          cachedQueryResultsRef.current = result.data
-          setMemos(result.data.slice(0, PAGE_SIZE))
-          setHasMore(result.data.length > PAGE_SIZE)
-        } else {
-          // クエリなし：DB 側ページネーション（range 適用済み）
-          cachedQueryResultsRef.current = []
-          setMemos(result.data)
-          setHasMore(result.data.length === PAGE_SIZE)
-        }
+        setMemos(result.data)
+        setHasMore(result.data.length === PAGE_SIZE)
       } finally {
         setIsFetching(false)
       }
@@ -118,17 +105,6 @@ export function MemoSearchPage({
   }
 
   const handleLoadMore = () => {
-    if (query.trim()) {
-      // クエリあり：キャッシュ済み全件から次の PAGE_SIZE 件を表示（追加 DB アクセス不要）
-      setMemos(prev => {
-        const nextCount = prev.length + PAGE_SIZE
-        const next = cachedQueryResultsRef.current.slice(0, nextCount)
-        setHasMore(cachedQueryResultsRef.current.length > nextCount)
-        return next
-      })
-      return
-    }
-    // クエリなし：DB 側ページネーション
     startLoadMoreTransition(async () => {
       const result = await searchMemos({
         query,

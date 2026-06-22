@@ -165,18 +165,13 @@ deleteBook(id: string): Promise<ActionResult<void>>
 
 ### getMemos
 
-読書メモ一覧を取得する。
+書籍詳細画面（SCR-05）用のメモ一覧を取得する。
 
 ```ts
-getMemos(params: GetMemosParams): Promise<ActionResult<MemoWithBook[]>>
+getMemos(params: GetMemosParams): Promise<ActionResult<MemoWithTags[]>>
 
 type GetMemosParams = {
-  bookId?: string;      // 指定時: 書籍詳細画面用（F-11, F-13）
-                        // 未指定: 全メモ検索（F-14）
-  query?: string;       // メモ内容・タグ・書籍名・著者名の部分一致
-  favoriteOnly?: boolean;
-  tagIds?: string[];
-  limit?: number;
+  bookId: string;  // 必須。書籍IDを指定する（SCR-05専用）
 };
 ```
 
@@ -184,9 +179,35 @@ type GetMemosParams = {
 |---|---|
 | 認証 | 必須 |
 | ソート | created_at DESC |
-| JOIN | books（書籍名・著者名取得）、memo_tags、tags |
-| フィルタ | ログインユーザーのメモのみ（RLSで担保） |
+| フィルタ | bookId で絞り込み、RLSでユーザーを担保 |
+| 件数上限 | 1,000件（Supabaseクライアントのデフォルト上限。書籍1冊あたりの想定最大メモ数は300件程度のため実用上の制限はない） |
 
+---
+
+### searchMemos
+
+全メモ横断検索（SCR-06）用のAction。`reading_memos.search_text` への GIN インデックスを利用し、PostgREST の標準クエリで直接検索する。
+
+```ts
+searchMemos(params: SearchMemosParams): Promise<ActionResult<MemoWithBook[]>>
+
+type SearchMemosParams = {
+  query?: string;       // search_text への部分一致（メモ内容・書籍名・著者名・タグ名を横断）
+  favoriteOnly?: boolean;
+  sortBy?: "created_at" | "updated_at";
+  limit?: number;       // デフォルト50、最大200
+  offset?: number;      // ページネーション用
+};
+```
+
+| 項目 | 内容 |
+|---|---|
+| 認証 | 必須 |
+| 実装 | Supabaseクライアントから `reading_memos` を直接クエリ。`books`・`tags` は表示用に通常の選択的JOIN（`select` の埋め込みリソース構文）で取得する |
+| 検索方式 | `search_text.ilike.%query%` による単一カラム検索（GINインデックス `idx_memos_search_text_trgm` を使用） |
+| ソート | sortBy DESC（created_at または updated_at） |
+| ページネーション | `.range(offset, offset + limit - 1)` でDB側ページング |
+| 注意 | 旧RPC関数（`search_memos`）は廃止。検索対象が単一テーブル・単一カラムになったため、複数テーブルJOINに起因するGINインデックス不使用の問題は発生しない |
 ---
 
 ### createMemo

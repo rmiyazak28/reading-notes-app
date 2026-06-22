@@ -40,12 +40,12 @@ export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="border-white/15 hover:bg-transparent">
-            <TableHead className="text-muted-foreground bg-white/5 w-[20%]">書籍名</TableHead>
-            <TableHead className="text-muted-foreground bg-white/5 w-[6%]">ページ</TableHead>
-            <TableHead className="text-muted-foreground bg-white/5 w-[40%]">メモ内容</TableHead>
-            <TableHead className="text-muted-foreground bg-white/5 w-[18%]">タグ</TableHead>
-            <TableHead className="text-muted-foreground bg-white/5 w-[6%]">★</TableHead>
-            <TableHead className="text-muted-foreground bg-white/5 w-[10%]">登録日 / 更新日</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[26%] xl:w-[20%]">書籍名</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[8%] xl:w-[6%]">ページ</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[57%] xl:w-[40%]">メモ内容</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[18%] hidden xl:table-cell">タグ</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[8%] xl:w-[6%]">★</TableHead>
+            <TableHead className="text-muted-foreground bg-white/5 w-[11%] hidden xl:table-cell">登録日 / 更新日</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -66,8 +66,23 @@ export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }
               </TableCell>
               <TableCell className="overflow-hidden max-w-0 whitespace-normal">
                 <p className="text-foreground text-sm line-clamp-2">{memo.content}</p>
+                <div className="flex flex-col gap-y-1 mt-1 xl:hidden">
+                  <div className="flex flex-wrap gap-1">
+                    {memo.tags.map(tag => (
+                      <span
+                        key={tag.id}
+                        className="text-[11px] bg-white/10 text-foreground-secondary px-1.5 py-0.5 rounded"
+                      >
+                        #{tag.name}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-[11px] text-foreground-dim">
+                    登録: {formatDate(memo.created_at)} / 更新: {formatDate(memo.updated_at)}
+                  </span>
+                </div>
               </TableCell>
-              <TableCell className="overflow-hidden">
+              <TableCell className="overflow-hidden hidden xl:table-cell">
                 <div className="flex flex-wrap gap-1">
                   {memo.tags.map(tag => (
                     <span
@@ -91,9 +106,9 @@ export function MemoSearchTable({ memos, togglingIds, onEdit, onToggleFavorite }
                   />
                 </button>
               </TableCell>
-              <TableCell>
-                <p className="text-foreground-secondary text-xs">登録: {formatDate(memo.created_at)}</p>
-                <p className="text-muted-foreground text-xs mt-0.5">更新: {formatDate(memo.updated_at)}</p>
+              <TableCell className="hidden xl:table-cell">
+                <p className="text-foreground-secondary text-xs whitespace-nowrap">登録: {formatDate(memo.created_at)}</p>
+                <p className="text-muted-foreground text-xs mt-0.5 whitespace-nowrap">更新: {formatDate(memo.updated_at)}</p>
               </TableCell>
             </TableRow>
           ))}
