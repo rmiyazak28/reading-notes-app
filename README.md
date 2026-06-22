@@ -309,7 +309,7 @@ src/
 
 | 項目 | 値 |
 |---|---|
-| URL | https://your-app.vercel.app |
+| URL | https://memo-lake-dun.vercel.app |
 | メールアドレス | demo@example.com |
 | パスワード | demo123! |
 
